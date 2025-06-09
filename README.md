@@ -6,7 +6,7 @@ This project is a **partial recreation of the classic PacMan arcade game**, writ
 ![Gameplay](images/gameplay.png)
 ## Requirements
 - Linux OS
-- C3 compiler ('c3c)
+- C3 compiler (c3c)
 ## Instalation
 All the necessary steps in order to download the C3 compiler can be found on the official website [Install C3 Compiler](https://c3-lang.org/getting-started/prebuilt-binaries/)
 ## Compiling a program
