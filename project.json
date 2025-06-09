@@ -1,0 +1,20 @@
+{
+    "langrev": "1",
+    "warnings": [ "no-unused" ],
+    "dependency-search-paths": [ "lib" ],
+    "dependencies": [],
+    "authors": [ "Antoni Regulski <antek.regulski12@gmail.com>" ],
+    "version": "0.1.0",
+    "sources": [ "PacMan/**", "assets/**" ],
+    "c-include-dirs": [ "csource/include" ],
+    "output": "build",
+    "targets": {
+	"linux-x64": {
+	    "type": "executable",
+	    "linker-search-paths": ["csource/lib/"],
+	    "linked-libraries" : ["raylib"], // Staticly linking    
+	},
+    },
+    "cpu": "generic",
+    "opt": "O0"
+}
