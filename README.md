@@ -1,5 +1,14 @@
 # PacMan Arcade Recreation in C3
 This project is a **partial recreation of the classic PacMan arcade game**, written in the [C3 programming language](https://c3-lang.org/) and using [Raylib](https://www.raylib.com/) as a graphic API. While it has all core mechanics **some features are currently missing or incomplete**
+## Screenshots
+<p align="center">
+  <img src="images/title_screen.png" width="50%" height="50%" alt="Title Screen">
+  <img src="images/start_level.png" width="50%" height="50%" alt="Start Level">
+  <img src="images/gameplay.png" width="50%" height="50%" alt="Gameplay">
+</p>
+
+---
+
 ## Requirements
 - Linux OS
 - C3 compiler (c3c)
@@ -21,9 +30,3 @@ This project is licensed under the [MIT License](LICENSE.md)
 + [The Pacman Dossier](https://pacman.holenet.info/#LvlSpecs)
 + [Pacman Textures](https://www.spriters-resource.com/arcade/pacman/)
 + [Why do Pinky and Inky have different behaviors when Pac-Man is facing up?](http://donhodges.com/pacman_pinky_explanation.htm)
-## Screenshots
-<p align="center">
-  <img src="images/title_screen.png" width="50%" height="50%" alt="Title Screen">
-  <img src="images/start_level.png" width="50%" height="50%" alt="Start Level">
-  <img src="images/gameplay.png" width="50%" height="50%" alt="Gameplay">
-</p>
