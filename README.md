@@ -1,9 +1,11 @@
 # PacMan Arcade Recreation in C3
 This project is a **partial recreation of the classic PacMan arcade game**, written in the [C3 programming language](https://c3-lang.org/) and using [Raylib](https://www.raylib.com/) as a graphic API. While it has all core mechanics **some features are currently missing or incomplete**
 ## Screenshots
-<img src="images/title_screen.png" width="50%" height="auto">
-<img src="images/start_level.png" width="50%" height="auto">
-<img src="images/gameplay.png" width="50%" height="auto">
+<p align="center">
+  <img src="images/title_screen.png" width="50%" alt="Title Screen">
+  <img src="images/start_level.png" width="50%" alt="Start Level">
+  <img src="images/gameplay.png" width="50%" alt="Gameplay">
+</p>
 ## Requirements
 - Linux OS
 - C3 compiler (c3c)
