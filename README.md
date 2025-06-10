@@ -6,7 +6,7 @@ This project is a **partial recreation of the classic PacMan arcade game**, writ
   <img src="images/start_level.png" width="50%" alt="Start Level">
   <img src="images/gameplay.png" width="50%" alt="Gameplay">
 </p>
-## Requirements
+##Requirements
 - Linux OS
 - C3 compiler (c3c)
 ## Instalation
