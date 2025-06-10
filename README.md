@@ -4,7 +4,7 @@ This project is a **partial recreation of the classic PacMan arcade game**, writ
 <p align="center">
 
 </p>
-##Requirements
+## Requirements
 - Linux OS
 - C3 compiler (c3c)
 ## Instalation
