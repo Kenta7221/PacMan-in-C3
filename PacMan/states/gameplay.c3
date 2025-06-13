@@ -405,21 +405,18 @@ fn void fruit_handler(Fruit **fruit, ScorePopup **score_popup, Gameplay *ctx) {
  @param [&in] font : "Font was passed as null!"
 *>
 fn void draw_ready_player_text(Font *font, TimeSpan pause) {
-  const CHAR_SIZE = 32;
-  const DRAW_FONT_SIZE = 40;
-    
   rl::draw_text_ex(*font,
 		   "Ready!",
-		   { (Uint16)(gl::MAZE_WIDTH / 2 * gl::PIXEL_SCALED - 3 * CHAR_SIZE) + 10, 20 * gl::PIXEL_SCALED - 5 },
-		   DRAW_FONT_SIZE, 0.f,
+		   { (Uint16)(gl::MAZE_WIDTH / 2 * gl::PIXEL_SCALED - 3 * gl::CHAR_SIZE) + 10, 20 * gl::PIXEL_SCALED - 5 },
+		   gl::DRAW_FONT_SIZE, 0.f,
 		   (Color){255, 255, 0, 255}
   );
 
   if(pause < 1.f) {
     rl::draw_text_ex(*font,
 		     "Player One!",
-		     { (Uint16)(gl::MAZE_WIDTH / 2 * gl::PIXEL_SCALED - 5 * CHAR_SIZE - 22) + 10, 14 * gl::PIXEL_SCALED - 5 },
-		     DRAW_FONT_SIZE, 0.f,
+		     { (Uint16)(gl::MAZE_WIDTH / 2 * gl::PIXEL_SCALED - 5 * gl::CHAR_SIZE - 22) + 10, 14 * gl::PIXEL_SCALED - 5 },
+		     gl::DRAW_FONT_SIZE, 0.f,
 		     (Color){0, 255, 255, 255}
     );
   }

@@ -2,10 +2,6 @@ module gl;
 
 import rl;
 
-//============================================================================================
-// Window global constants
-//============================================================================================
-
 alias Uint16 = ushort;
 alias Uint8 = char;
 alias Int16  = short;
@@ -13,7 +9,7 @@ alias Int8 = ichar;
 
 alias TimeSpan = float;
 
-const SCALE = 4;
+const SCALE = 2;
 const PIXEL_SIZE = 8;
 const PIXEL_SCALED = SCALE * PIXEL_SIZE;
 const PADDING = 1;
@@ -24,8 +20,12 @@ const BOTTOM_UI_SIZE = 2;
 const MAZE_HEIGHT = 31;
 const MAZE_WIDTH = 28;
 
-const uint SPRITE_SIZE = 2 * gl::PIXEL_SIZE;
-const uint SPRITE_SIZE_SCALED = 2 * gl::PIXEL_SCALED;
+const FONT_BASE_SIZE = 64;
+const CHAR_SIZE = 32;
+const DRAW_FONT_SIZE = 42;
+
+const SPRITE_SIZE = 2 * gl::PIXEL_SIZE;
+const SPRITE_SIZE_SCALED = 2 * gl::PIXEL_SCALED;
 
 enum EventType : (inline Uint8 type) {
   NONE           = 0,

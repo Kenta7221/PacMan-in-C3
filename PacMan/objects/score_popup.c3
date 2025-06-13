@@ -56,9 +56,8 @@ struct ScorePopup {
 *>
 fn void? ScorePopup.init(&self, EventType event, Uint16[<2>] pos, Uint8 ghost_eaten, Uint16 fruit_points) {
   const String FONT_FILENAME = "assets/fonts/pixgamer.ttf";
-  const FONT_BASE_SIZE = 64;
 
-  self.font = rl::load_font_ex(FONT_FILENAME, FONT_BASE_SIZE, null, 0);
+  self.font = rl::load_font_ex(FONT_FILENAME, gl::FONT_BASE_SIZE, null, 0);
   if(!rl::is_font_valid(self.font)) {
     io::printn("Font for score popup was not loaded!");
     return io::FILE_NOT_FOUND?;
@@ -111,15 +110,12 @@ fn bool ScorePopup.can_drawn(&self, TimeSpan dt) @inline {
 }
 
 fn void ScorePopup.draw(&self) {
-  const CHAR_SIZE = 32;
-  const DRAW_FONT_SIZE = 42;
-
   float[<2>] center_pos = self.pos;
   
   rl::draw_text_ex(self.font,
 		   self.str,
 		   center_pos,
-		   DRAW_FONT_SIZE,
+		   gl::DRAW_FONT_SIZE,
 		   3.f,
 		   self.color
   );

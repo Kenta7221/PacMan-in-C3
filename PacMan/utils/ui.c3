@@ -44,11 +44,10 @@ struct GameUI {
 
 fn void? GameUI.init(&self, Texture2D *atlas) {
   const String FONT_DIR = "assets/fonts/emulogic.ttf";
-  const FONT_BASE_SIZE = 64;
-
+  
   self.atlas_ptr = atlas;
 
-  self.font = rl::load_font_ex(FONT_DIR, FONT_BASE_SIZE, null, 0);
+  self.font = rl::load_font_ex(FONT_DIR, gl::FONT_BASE_SIZE, null, 0);
   if(!rl::is_font_valid(self.font)) {
     io::printn("Font for ui was not loaded!");
     return io::FILE_NOT_FOUND?;
@@ -112,10 +111,7 @@ fn void GameUI.draw_ready_player(&self) {
   );
 }
 
-fn void GameUI.draw_ui(&self, Uint8 pacman_lives, bool draw_fruits = true) {
-  const CHAR_SIZE = 32;
-  const DRAW_FONT_SIZE = 40;
-  
+fn void GameUI.draw_ui(&self, Uint8 pacman_lives, bool draw_fruits = true) {  
   ZString str = (ZString)mem::new_array(char, 12);
   
   if(self.score >= self.high_score) self.high_score = self.score;
@@ -123,41 +119,41 @@ fn void GameUI.draw_ui(&self, Uint8 pacman_lives, bool draw_fruits = true) {
   // High Score    
   libc::sprintf(str, "%d", self.high_score);
   Uint16[<2>] high_score_pos = {
-    (Uint16)(gl::MAZE_WIDTH / 2 * gl::PIXEL_SCALED - (str.char_len() - 3) * CHAR_SIZE),
-    CHAR_SIZE + 10
+    (Uint16)(gl::MAZE_WIDTH / 2 * gl::PIXEL_SCALED - (str.char_len() - 3) * gl::CHAR_SIZE),
+    gl::CHAR_SIZE + 10
   };
 
   rl::draw_text_ex(self.font,
 		   "High Score",
-		   { gl::MAZE_WIDTH / 2 * gl::PIXEL_SCALED - 10 * CHAR_SIZE / 2, 0 },
-		   DRAW_FONT_SIZE, 0.f,
+		   { gl::MAZE_WIDTH / 2 * gl::PIXEL_SCALED - 10 * gl::CHAR_SIZE / 2, 0 },
+		   gl::DRAW_FONT_SIZE, 0.f,
 		   (Color){255, 255, 255, 255}
   );
   
-  rl::draw_text_ex(self.font, str, high_score_pos, DRAW_FONT_SIZE, 0.f, (Color){255, 255, 255, 255});
+  rl::draw_text_ex(self.font, str, high_score_pos, gl::DRAW_FONT_SIZE, 0.f, (Color){255, 255, 255, 255});
 
   // Player score    
   Uint16[<2>] player_score_pos = {
-    (Uint16)(gl::MAZE_WIDTH / 6 * gl::PIXEL_SCALED - (str.char_len() - 3) * CHAR_SIZE),
-    CHAR_SIZE + 10
+    (Uint16)(gl::MAZE_WIDTH / 6 * gl::PIXEL_SCALED - (str.char_len() - 3) * gl::CHAR_SIZE),
+    gl::CHAR_SIZE + 10
   };
 
   libc::sprintf(str, "%d", self.score);
   rl::draw_text_ex(self.font,
 		   "1UP",
-		   { gl::MAZE_WIDTH / 6 * gl::PIXEL_SCALED - 2 * CHAR_SIZE / 2, 0 },
-		   DRAW_FONT_SIZE, 0.f,
+		   { gl::MAZE_WIDTH / 6 * gl::PIXEL_SCALED - 2 * gl::CHAR_SIZE / 2, 0 },
+		   gl::DRAW_FONT_SIZE, 0.f,
 		   (Color){255, 255, 255, 255}
   );
 
-  rl::draw_text_ex(self.font, str, player_score_pos, DRAW_FONT_SIZE, 0.f, (Color){255, 255, 255, 255});
+  rl::draw_text_ex(self.font, str, player_score_pos, gl::DRAW_FONT_SIZE, 0.f, (Color){255, 255, 255, 255});
 
   free(str);
   
   // Lives
   for(Uint8 i = 0; i < pacman_lives; i++) {
     Rectangle dest = {
-      (float)(2 * CHAR_SIZE + 2 * i * CHAR_SIZE),
+      (float)(2 * gl::CHAR_SIZE + 2 * i * gl::CHAR_SIZE),
       (gl::MAZE_HEIGHT + gl::TOP_UI_SIZE) * gl::PIXEL_SCALED,
       gl::SPRITE_SIZE_SCALED,
       gl::SPRITE_SIZE_SCALED,
@@ -172,7 +168,7 @@ fn void GameUI.draw_ui(&self, Uint8 pacman_lives, bool draw_fruits = true) {
 			 },
 			  
 			 { /*destination*/
-			   (float)(2 * CHAR_SIZE + 2 * i * CHAR_SIZE),
+			   (float)(2 * gl::CHAR_SIZE + 2 * i * gl::CHAR_SIZE),
 			   (gl::MAZE_HEIGHT + gl::TOP_UI_SIZE) * gl::PIXEL_SCALED,
 			   gl::SPRITE_SIZE_SCALED,
 			   gl::SPRITE_SIZE_SCALED,
@@ -236,7 +232,7 @@ fn void GameUI.draw_ui(&self, Uint8 pacman_lives, bool draw_fruits = true) {
     }
 
     Rectangle dest = {
-      (float)(gl::MAZE_WIDTH * gl::PIXEL_SCALED - (2 * CHAR_SIZE + 2 * idx * CHAR_SIZE) - CHAR_SIZE),
+      (float)(gl::MAZE_WIDTH * gl::PIXEL_SCALED - (2 * gl::CHAR_SIZE + 2 * idx * gl::CHAR_SIZE) - gl::CHAR_SIZE),
       (gl::MAZE_HEIGHT + gl::TOP_UI_SIZE) * gl::PIXEL_SCALED,
       gl::SPRITE_SIZE_SCALED,
       gl::SPRITE_SIZE_SCALED,

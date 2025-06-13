@@ -73,3 +73,7 @@ fn void GameContext.clean(&self) {
   rl::unload_texture(self.entity_atlas);
   self.gameplay.clean();
 }
+
+ - If user changes scale the text and the speed doesn't change accordingly to it
+ - Beacuse spacing is hard coded if the scale is smaller it becames much more visible
+ - Once Pinky has left the maze entirely and i have no idea how
