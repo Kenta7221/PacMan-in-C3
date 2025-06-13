@@ -25,14 +25,14 @@ c3c run
 ```
 ## How to play
 - Start the game by pressing **space bar**
-- Move using WASD
+- Move using **WASD**
 - Collect all **244 dots** to advance to the next level
 - The game ends when **PacMan loses all his lives**
 ## Missing features
-- Blinky lacking the 'Elroy' mechanic
-- Frighten ghost blink continuously instead of only when the timer is almost over
-- Random number generator is not fully accurate to the original
-- No option to scale the game UI (text and spacing are hardcoded)
+- Blinky lacking the **'Elroy'** mechanic
+- Frighten ghost **blink** continuously instead of only when the timer is almost over
+- **Random number generator** is not fully accurate to the original
+- No option to **scale the game UI** (text and spacing are hardcoded)
 ## License
 This project is licensed under the [MIT License](LICENSE.md)
 ## Acknowledgments
