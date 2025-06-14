@@ -9,7 +9,7 @@ alias Int8 = ichar;
 
 alias TimeSpan = float;
 
-const SCALE = 2;
+const SCALE = 4;
 const PIXEL_SIZE = 8;
 const PIXEL_SCALED = SCALE * PIXEL_SIZE;
 const PADDING = 1;

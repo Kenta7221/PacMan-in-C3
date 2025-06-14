@@ -3,7 +3,7 @@
     "warnings": [ "no-unused" ],
     "dependency-search-paths": [ "lib" ],
     "dependencies": [],
-    "authors": [ "Antoni Regulski <antek.regulski12@gmail.com>" ],
+    "authors": [ "Antoni Regulski (@Kenta) <antek.regulski12@gmail.com>" ],
     "version": "0.1.0",
     "sources": [ "PacMan/**", "assets/**" ],
     "c-include-dirs": [ "csource/include" ],
@@ -11,7 +11,7 @@
     "targets": {
 	"linux-x64": {
 	    "type": "executable",
-	    "linker-search-paths": ["csource/lib/linux-x64"],
+	    "linker-search-paths": ["csource/linux-x64"],
 	    "linked-libraries" : ["raylib"]
 	},
 	"windows-x64": {
