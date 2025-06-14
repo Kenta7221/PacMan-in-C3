@@ -18,7 +18,7 @@ struct Animator {
 }
 
 <*
- @require atlas_ptr != null : "Atlas pointer is null"
+ @param [&in] atlas_ptr : "Atlas pointer is null"
 *>
 fn void Animator.init(&animator, Texture2D *atlas_ptr, Uint8 start, Uint8 end, TimeSpan switch_time) {
   animator.atlas_ptr = atlas_ptr;

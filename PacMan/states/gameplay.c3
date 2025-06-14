@@ -350,7 +350,7 @@ fn void Gameplay.draw(&self, TimeSpan pause) {
     : score_popup::handler(&self.score_popup, {0, 0}, 0, 0, PopupState.DESTROY, EventType.NONE);    
 }
 
-fn void Gameplay.clean(&self) {
+fn void Gameplay.free(&self) {
   self.ui.free();
   self.maze.free();
 
@@ -407,16 +407,25 @@ fn void fruit_handler(Fruit **fruit, ScorePopup **score_popup, Gameplay *ctx) {
 fn void draw_ready_player_text(Font *font, TimeSpan pause) {
   rl::draw_text_ex(*font,
 		   "Ready!",
-		   { (Uint16)(gl::MAZE_WIDTH / 2 * gl::PIXEL_SCALED - 3 * gl::CHAR_SIZE) + 10, 20 * gl::PIXEL_SCALED - 5 },
-		   gl::DRAW_FONT_SIZE, 0.f,
+		   {
+		     12 * gl::MIDDLE_TEXT_SIZE,
+		     20 * gl::MIDDLE_TEXT_SIZE
+		   },
+		   gl::MIDDLE_TEXT_SIZE,
+		   0.f,
 		   (Color){255, 255, 0, 255}
   );
 
   if(pause < 1.f) {
     rl::draw_text_ex(*font,
-		     "Player One!",
-		     { (Uint16)(gl::MAZE_WIDTH / 2 * gl::PIXEL_SCALED - 5 * gl::CHAR_SIZE - 22) + 10, 14 * gl::PIXEL_SCALED - 5 },
-		     gl::DRAW_FONT_SIZE, 0.f,
+		     "Player One",
+		     {
+		       10 * gl::MIDDLE_TEXT_SIZE,
+		       14 * gl::MIDDLE_TEXT_SIZE
+		     },
+		     gl::MIDDLE_TEXT_SIZE,
+		     0.f,
+
 		     (Color){0, 255, 255, 255}
     );
   }

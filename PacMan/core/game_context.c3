@@ -69,7 +69,10 @@ fn void GameContext.draw(&self, GameState state, TimeSpan pause) {
   self.death_screen.draw();
 }
 
-fn void GameContext.clean(&self) {
+fn void GameContext.free(&self) {
   rl::unload_texture(self.entity_atlas);
-  self.gameplay.clean();
+  
+  self.title_screen.free();
+  self.gameplay.free();
+  self.death_screen.free();
 }

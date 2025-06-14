@@ -115,7 +115,7 @@ fn void ScorePopup.draw(&self) {
   rl::draw_text_ex(self.font,
 		   self.str,
 		   center_pos,
-		   gl::DRAW_FONT_SIZE,
+		   gl::MIDDLE_TEXT_SIZE,
 		   3.f,
 		   self.color
   );

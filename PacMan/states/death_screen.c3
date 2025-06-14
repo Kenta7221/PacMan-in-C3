@@ -54,3 +54,9 @@ fn void DeathScreen.draw(&self) {
 		   (Color){255, 0, 0, 255}
   );
 }
+
+fn void DeathScreen.free(&self) {
+  rl::unload_font(self.font);
+  //free(self.timer);
+  self.maze.free();
+}

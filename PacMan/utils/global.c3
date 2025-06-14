@@ -20,12 +20,12 @@ const BOTTOM_UI_SIZE = 2;
 const MAZE_HEIGHT = 31;
 const MAZE_WIDTH = 28;
 
-const FONT_BASE_SIZE = 64;
-const CHAR_SIZE = 32;
-const DRAW_FONT_SIZE = 42;
+const FONT_BASE_SIZE = 128;
+const MIDDLE_TEXT_SIZE = SCALE * PIXEL_SIZE;
+const SMALL_TEXT_SIZE = (SCALE - 1) * PIXEL_SIZE;
 
 const SPRITE_SIZE = 2 * gl::PIXEL_SIZE;
-const SPRITE_SIZE_SCALED = 2 * gl::PIXEL_SCALED;
+const SPRITE_SIZE_SCALED = 2 * gl::PIXEL_SIZE * SCALE;
 
 enum EventType : (inline Uint8 type) {
   NONE           = 0,

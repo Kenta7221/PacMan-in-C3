@@ -9,10 +9,6 @@ import ghost;
 import ui;
 import timer;
 
-const FONT_BASE_SIZE = 64;
-const CHAR_SIZE = 32;
-const DRAW_FONT_SIZE = 36;
-
 struct TitleScreen {
   Texture2D* entity_atlas; // Pacman, ghosts and fruits
   Texture2D maze_atlas;    // Only for dots and pellets
@@ -24,10 +20,6 @@ struct TitleScreen {
   Ghost[4] ghosts;
 }
 
-<*
-@param [&out] entity_atlas
-@param [&out] timer
-*>
 fn void? TitleScreen.init(&self, Texture2D *entity_atlas, Timer *timer) {
   const String MAZE_ATLAS_DIR = "assets/textures/maze-spritesheet.png";
   const String FONT_DIR = "assets/fonts/emulogic.ttf";
@@ -40,7 +32,9 @@ fn void? TitleScreen.init(&self, Texture2D *entity_atlas, Timer *timer) {
     17 * gl::PIXEL_SCALED, // Clyde
   };
 
+  self.entity_atlas = malloc(Texture2D.sizeof);
   self.entity_atlas = entity_atlas;
+  
   self.timer = timer;
 
   self.maze_atlas = rl::load_texture(MAZE_ATLAS_DIR);
@@ -49,7 +43,7 @@ fn void? TitleScreen.init(&self, Texture2D *entity_atlas, Timer *timer) {
     return io::FILE_NOT_FOUND?;
   }
   
-  self.font = rl::load_font_ex(FONT_DIR, FONT_BASE_SIZE, null, 0);
+  self.font = rl::load_font_ex(FONT_DIR, gl::FONT_BASE_SIZE, null, 0);
   if(!rl::is_font_valid(self.font)) {
     io::printn("Font has not been loaded!");
     return io::FILE_NOT_FOUND?;
@@ -86,8 +80,12 @@ fn void TitleScreen.draw(&self, TimeSpan dt) {
   
   rl::draw_text_ex(self.font,
 		   "Character / Nickname",
-		   { (float)(self.ghosts[0].pos.x + 2 * CHAR_SIZE), (float)(self.ghosts[0].pos.y - CHAR_SIZE / 4 - 3 * gl::SPRITE_SIZE)},
-		   DRAW_FONT_SIZE, 0.f,
+		   {
+		     (float)(self.ghosts[0].pos.x + 2 * gl::MIDDLE_TEXT_SIZE),
+		     (float)(self.ghosts[0].pos.y - gl::SPRITE_SIZE_SCALED)
+		   },
+		   gl::MIDDLE_TEXT_SIZE,
+		   0.0f,
 		   (Color){255, 255, 255, 255}
   );
 
@@ -102,8 +100,12 @@ fn void TitleScreen.draw(&self, TimeSpan dt) {
   
   rl::draw_text_ex(self.font,
 		   "2025 made by Kenta",
-		   { 5 * gl::PIXEL_SCALED + CHAR_SIZE, 31 * gl::PIXEL_SCALED - CHAR_SIZE / 4 },
-		   DRAW_FONT_SIZE, 0.f,
+		   {
+		     (float)(self.ghosts[3].pos.x + gl::MIDDLE_TEXT_SIZE),
+		     (float)(self.ghosts[3].pos.y + 8 * gl::SPRITE_SIZE_SCALED)
+		   },
+		   gl::MIDDLE_TEXT_SIZE,
+		   0.f,
 		   (Color){255, 185, 255, 255}
   );
 
@@ -116,8 +118,12 @@ fn void TitleScreen.draw(&self, TimeSpan dt) {
   
   rl::draw_text_ex(self.font,
 		   "Press space to start!",
-		   { 5 * gl::PIXEL_SCALED, 21 * gl::PIXEL_SCALED - CHAR_SIZE / 4 },
-		   DRAW_FONT_SIZE, 0.f,
+		   {
+		     (float)(self.ghosts[3].pos.x),
+		     (float)(self.ghosts[3].pos.y + 2 * gl::SPRITE_SIZE_SCALED)
+		   },
+		   gl::MIDDLE_TEXT_SIZE,
+		   0.f,
 		   (Color){255, 255, 255, 255}
   );
 }
@@ -139,8 +145,12 @@ fn void draw_ghost_with_name(Ghost *ghost, Uint8 ghost_type, Font *font, ZString
 
   rl::draw_text_ex(*font,
 		   nicknames,
-		   { (float)(ghost.pos.x + 2 * CHAR_SIZE), (float)(ghost.pos.y - CHAR_SIZE / 4) },
-		   DRAW_FONT_SIZE, 0.f,
+		   {
+		     (float)(ghost.pos.x + 2 * gl::MIDDLE_TEXT_SIZE),
+		     (float)(ghost.pos.y + gl::MIDDLE_TEXT_SIZE / 18)
+		   },
+		   gl::MIDDLE_TEXT_SIZE,
+		   0.f,
 		   FONT_COLOR[ghost_type]
   );
 }
@@ -183,8 +193,12 @@ fn void draw_maze_points(Texture2D *maze_atlas, Font *font) {
 
   rl::draw_text_ex(*font,
 		   "10 pts",
-		   { (float)(DRAW_POS_X + 2 * CHAR_SIZE), 24 * gl::PIXEL_SCALED - CHAR_SIZE / 4 },
-		   DRAW_FONT_SIZE, 0.f,
+		   {
+		     (float)(DRAW_POS_X + 1.5f * gl::MIDDLE_TEXT_SIZE),
+		     (float)(24 * gl::PIXEL_SCALED - gl::MIDDLE_TEXT_SIZE / 8)
+		   },
+		   gl::MIDDLE_TEXT_SIZE,
+		   0.f,
 		   (Color){255, 255, 255, 255}
   );
   
@@ -197,8 +211,23 @@ fn void draw_maze_points(Texture2D *maze_atlas, Font *font) {
   
   rl::draw_text_ex(*font,
 		   "50 pts",
-		   { (float)(DRAW_POS_X + 2 * CHAR_SIZE), 26 * gl::PIXEL_SCALED - CHAR_SIZE / 4 },
-		   DRAW_FONT_SIZE, 0.f,
+		   {
+		     (float)(DRAW_POS_X + 1.5f * gl::MIDDLE_TEXT_SIZE),
+		     (float)(26 * gl::PIXEL_SCALED - gl::MIDDLE_TEXT_SIZE / 8)
+		   },
+		   gl::MIDDLE_TEXT_SIZE,
+		   0.f,
 		   (Color){255, 255, 255, 255}
   );
+}
+
+fn void TitleScreen.free(&self) {
+  rl::unload_texture(self.maze_atlas);
+
+  self.entity_atlas = null;
+  self.timer = null;
+
+  self.ui.free();
+
+  rl::unload_font(self.font);
 }

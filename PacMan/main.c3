@@ -34,6 +34,6 @@ fn void main() {
     rl::end_drawing();
   }
 
-  ctx.clean();
+  ctx.free();
   rl::close_window();
 }

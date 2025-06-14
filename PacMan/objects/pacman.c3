@@ -101,8 +101,8 @@ fn void PacMan.draw(&self, TimeSpan dt, bool dead = false) {
   Rectangle src;
 
   Rectangle dest = {
-    (float)self.pos.x - gl::SPRITE_SIZE,
-    (float)self.pos.y - gl::SPRITE_SIZE,
+    (float)self.pos.x - gl::SPRITE_SIZE_SCALED / 4,
+    (float)self.pos.y - gl::SPRITE_SIZE_SCALED / 4,
     gl::SPRITE_SIZE_SCALED,
     gl::SPRITE_SIZE_SCALED,
   };
