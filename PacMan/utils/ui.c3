@@ -162,16 +162,9 @@ fn void GameUI.draw_ui(&self, Uint8 pacman_lives, bool draw_fruits = true) {
   
   // Lives
   for(Uint8 i = 0; i < pacman_lives; i++) {
-    Rectangle dest = {
-      (float)(2 * gl::MIDDLE_TEXT_SIZE + 2 * i * gl::MIDDLE_TEXT_SIZE),
-      (gl::MAZE_HEIGHT + gl::TOP_UI_SIZE) * gl::PIXEL_SCALED,
-      gl::SPRITE_SIZE_SCALED,
-      gl::SPRITE_SIZE_SCALED,
-    };
-    
     rl::draw_texture_pro(*self.atlas_ptr,
 			 { /*src*/
-			   2.f + gl::SPRITE_SIZE,
+ 			   2.f + gl::SPRITE_SIZE,
 			   1.f,
 			   -1 * gl::SPRITE_SIZE,
 			   gl::SPRITE_SIZE

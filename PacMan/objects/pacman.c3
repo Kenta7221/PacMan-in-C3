@@ -99,9 +99,9 @@ fn void PacMan.move(&self, Tile *tiles) {
 
 fn void PacMan.draw(&self, TimeSpan dt, bool dead = false) {
   Rectangle src;
-
-  Rectangle dest = {
-    (float)self.pos.x - gl::SPRITE_SIZE_SCALED / 4,
+                                // Pacman in atlas is not centered 
+  Rectangle dest = {            //                 ⌄⌄⌄⌄⌄⌄⌄⌄⌄⌄⌄⌄⌄⌄
+    (float)self.pos.x - gl::SPRITE_SIZE_SCALED / 4 + gl::SCALE / 2,
     (float)self.pos.y - gl::SPRITE_SIZE_SCALED / 4,
     gl::SPRITE_SIZE_SCALED,
     gl::SPRITE_SIZE_SCALED,

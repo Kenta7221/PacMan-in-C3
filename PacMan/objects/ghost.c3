@@ -312,10 +312,10 @@ fn void Ghost.draw(&self, Uint8 ghost_type, TimeSpan dt) {
   }
 
   Rectangle src = self.animation.get_src(row, dt);
-      
+  
   Rectangle dest = {
-    (float)self.pos.x - gl::SPRITE_SIZE,
-    (float)self.pos.y - gl::SPRITE_SIZE,
+    (float)self.pos.x - gl::SPRITE_SIZE_SCALED / 4,
+    (float)self.pos.y - gl::SPRITE_SIZE_SCALED / 4,
     gl::SPRITE_SIZE_SCALED,
     gl::SPRITE_SIZE_SCALED,
   };
