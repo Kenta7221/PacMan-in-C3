@@ -64,21 +64,23 @@ fn void? ScorePopup.init(&self, EventType event, Uint16[<2>] pos, Uint8 ghost_ea
   }
 
   self.str = (ZString)mem::new_array(char, 12);;
+  self.total_time = 0.f;
+  
   Uint16 points;
   
   if(event == EventType.GHOST_EATEN) {
-    points = ghost_eaten * 400;
+    points = ghost_eaten * (200 + 200 * ghost_eaten);
+    libc::sprintf(self.str, "%d", points);
+    self.pos = (pos / gl::PIXEL_SCALED) * gl::PIXEL_SCALED;
     self.color = {0, 255, 255, 255};
-  }
-  else {
-    points = fruit_points;
-    self.color = {255, 200, 255, 255};
+    return;
   }
   
+  points = fruit_points;
   libc::sprintf(self.str, "%d", points);
+  self.pos = { 13 * gl::PIXEL_SCALED + (gl::PIXEL_SCALED / 2), 20 * gl::PIXEL_SCALED};  
+  self.color = {255, 200, 255, 255};
 
-  self.pos = (pos / gl::PIXEL_SCALED) * gl::PIXEL_SCALED;
-  self.total_time = 0.f;
 }
 
 <*
@@ -86,22 +88,22 @@ fn void? ScorePopup.init(&self, EventType event, Uint16[<2>] pos, Uint8 ghost_ea
  @require event == EventType.GHOST_EATEN || EventType.FRUIT_EATEN : "Passed wrong event type"
 *>
 fn void ScorePopup.update(&self, EventType event, Uint16[<2>] pos, Uint8 ghost_eaten, Uint16 fruit_points) {
-  Uint16 points;
-  
-  if(event == EventType.GHOST_EATEN) {
-    points = ghost_eaten * 400;
-    self.color = {0, 255, 255, 255};
-  }
-  else {
-    points = fruit_points;
-    self.color = {255, 200, 255, 255};
-  }
-  
-  libc::sprintf(self.str, "%d", points);
-
-  // Clamp position to a tile
-  self.pos = (pos / gl::PIXEL_SCALED) * gl::PIXEL_SCALED;
   self.total_time = 0.f;
+  
+  Uint16 points;
+    
+  if(event == EventType.GHOST_EATEN) {
+    points = ghost_eaten * (200 + 200 * ghost_eaten);
+    libc::sprintf(self.str, "%d", points);
+    self.pos = (pos / gl::PIXEL_SCALED) * gl::PIXEL_SCALED;
+    self.color = {0, 255, 255, 255};
+    return;
+  }
+  
+  points = fruit_points;
+  libc::sprintf(self.str, "%d", points);
+  self.pos = { 13 * gl::PIXEL_SCALED + (gl::PIXEL_SCALED / 2), 20 * gl::PIXEL_SCALED};  
+  self.color = {255, 200, 255, 255};
 }
 
 fn bool ScorePopup.can_drawn(&self, TimeSpan dt) @inline {
@@ -110,12 +112,10 @@ fn bool ScorePopup.can_drawn(&self, TimeSpan dt) @inline {
 }
 
 fn void ScorePopup.draw(&self) {
-  float[<2>] center_pos = self.pos;
-  
   rl::draw_text_ex(self.font,
 		   self.str,
-		   center_pos,
-		   gl::MIDDLE_TEXT_SIZE,
+		   self.pos,
+		   gl::TEXT_SIZE,
 		   3.f,
 		   self.color
   );

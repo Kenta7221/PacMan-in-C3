@@ -121,7 +121,7 @@ fn void GameUI.draw_ui(&self, Uint8 pacman_lives, bool draw_fruits = true) {
   padding = (Uint16)str.char_len() - 1;
   Uint16[<2>] high_score_pos = {
     (Uint16)(15 * gl::PIXEL_SCALED + 3 * gl::PIXEL_SCALED / 5 - padding * gl::PIXEL_SCALED + padding * (gl::SCALE + 3)),
-    gl::MIDDLE_TEXT_SIZE
+    gl::TEXT_SIZE
   };
 
   rl::draw_text_ex(self.font,
@@ -130,18 +130,18 @@ fn void GameUI.draw_ui(&self, Uint8 pacman_lives, bool draw_fruits = true) {
 		     10 * gl::PIXEL_SCALED,
 		     0
 		   },
-		   gl::MIDDLE_TEXT_SIZE,
+		   gl::TEXT_SIZE,
 		   0.f,
 		   (Color){255, 255, 255, 255}
   );
   
-  rl::draw_text_ex(self.font, str, high_score_pos, gl::MIDDLE_TEXT_SIZE, 0.f, (Color){255, 255, 255, 255});
+  rl::draw_text_ex(self.font, str, high_score_pos, gl::TEXT_SIZE, 0.f, (Color){255, 255, 255, 255});
 
   // Player score
   padding = (Uint16)str.char_len() - 1;
   Uint16[<2>] player_score_pos = {
     (Uint16)(6 * gl::PIXEL_SCALED + gl::PIXEL_SCALED / 3 - padding * gl::PIXEL_SCALED + padding * (gl::SCALE + 3)),
-    gl::MIDDLE_TEXT_SIZE
+    gl::TEXT_SIZE
   };
 
   libc::sprintf(str, "%d", self.score);
@@ -151,12 +151,12 @@ fn void GameUI.draw_ui(&self, Uint8 pacman_lives, bool draw_fruits = true) {
 		     4 * gl::PIXEL_SCALED,
 		     0
 		   },
-		   gl::MIDDLE_TEXT_SIZE,
+		   gl::TEXT_SIZE,
 		   0.f,
 		   (Color){255, 255, 255, 255}
   );
 
-  rl::draw_text_ex(self.font, str, player_score_pos, gl::MIDDLE_TEXT_SIZE, 0.f, (Color){255, 255, 255, 255});
+  rl::draw_text_ex(self.font, str, player_score_pos, gl::TEXT_SIZE, 0.f, (Color){255, 255, 255, 255});
 
   free(str);
   
@@ -171,7 +171,7 @@ fn void GameUI.draw_ui(&self, Uint8 pacman_lives, bool draw_fruits = true) {
 			 },
 			  
 			 { /*destination*/
-			   (float)(2 * gl::MIDDLE_TEXT_SIZE + 2 * i * gl::MIDDLE_TEXT_SIZE),
+			   (float)(2 * gl::TEXT_SIZE + 2 * i * gl::TEXT_SIZE),
 			   (gl::MAZE_HEIGHT + gl::TOP_UI_SIZE) * gl::PIXEL_SCALED,
 			   gl::SPRITE_SIZE_SCALED,
 			   gl::SPRITE_SIZE_SCALED,
@@ -235,7 +235,7 @@ fn void GameUI.draw_ui(&self, Uint8 pacman_lives, bool draw_fruits = true) {
     }
 
     Rectangle dest = {
-      (float)(gl::MAZE_WIDTH * gl::PIXEL_SCALED - (2 * gl::MIDDLE_TEXT_SIZE + 2 * idx * gl::MIDDLE_TEXT_SIZE) - gl::MIDDLE_TEXT_SIZE),
+      (float)(gl::MAZE_WIDTH * gl::PIXEL_SCALED - (2 * gl::TEXT_SIZE + 2 * idx * gl::TEXT_SIZE) - gl::TEXT_SIZE),
       (gl::MAZE_HEIGHT + gl::TOP_UI_SIZE) * gl::PIXEL_SCALED,
       gl::SPRITE_SIZE_SCALED,
       gl::SPRITE_SIZE_SCALED,

@@ -81,10 +81,10 @@ fn void TitleScreen.draw(&self, TimeSpan dt) {
   rl::draw_text_ex(self.font,
 		   "Character / Nickname",
 		   {
-		     (float)(self.ghosts[0].pos.x + 2 * gl::MIDDLE_TEXT_SIZE),
+		     (float)(self.ghosts[0].pos.x + 2 * gl::TEXT_SIZE),
 		     (float)(self.ghosts[0].pos.y - gl::SPRITE_SIZE_SCALED)
 		   },
-		   gl::MIDDLE_TEXT_SIZE,
+		   gl::TEXT_SIZE,
 		   0.0f,
 		   (Color){255, 255, 255, 255}
   );
@@ -101,10 +101,10 @@ fn void TitleScreen.draw(&self, TimeSpan dt) {
   rl::draw_text_ex(self.font,
 		   "2025 made by Kenta",
 		   {
-		     (float)(self.ghosts[3].pos.x + gl::MIDDLE_TEXT_SIZE),
+		     (float)(self.ghosts[3].pos.x + gl::TEXT_SIZE),
 		     (float)(self.ghosts[3].pos.y + 8 * gl::SPRITE_SIZE_SCALED)
 		   },
-		   gl::MIDDLE_TEXT_SIZE,
+		   gl::TEXT_SIZE,
 		   0.f,
 		   (Color){255, 185, 255, 255}
   );
@@ -122,7 +122,7 @@ fn void TitleScreen.draw(&self, TimeSpan dt) {
 		     (float)(self.ghosts[3].pos.x),
 		     (float)(self.ghosts[3].pos.y + 2 * gl::SPRITE_SIZE_SCALED)
 		   },
-		   gl::MIDDLE_TEXT_SIZE,
+		   gl::TEXT_SIZE,
 		   0.f,
 		   (Color){255, 255, 255, 255}
   );
@@ -146,10 +146,10 @@ fn void draw_ghost_with_name(Ghost *ghost, Uint8 ghost_type, Font *font, ZString
   rl::draw_text_ex(*font,
 		   nicknames,
 		   {
-		     (float)(ghost.pos.x + 2 * gl::MIDDLE_TEXT_SIZE),
-		     (float)(ghost.pos.y + gl::MIDDLE_TEXT_SIZE / 18)
+		     (float)(ghost.pos.x + 2 * gl::TEXT_SIZE),
+		     (float)(ghost.pos.y + gl::TEXT_SIZE / 18)
 		   },
-		   gl::MIDDLE_TEXT_SIZE,
+		   gl::TEXT_SIZE,
 		   0.f,
 		   FONT_COLOR[ghost_type]
   );
@@ -194,10 +194,10 @@ fn void draw_maze_points(Texture2D *maze_atlas, Font *font) {
   rl::draw_text_ex(*font,
 		   "10 pts",
 		   {
-		     (float)(DRAW_POS_X + 1.5f * gl::MIDDLE_TEXT_SIZE),
-		     (float)(24 * gl::PIXEL_SCALED - gl::MIDDLE_TEXT_SIZE / 8)
+		     (float)(DRAW_POS_X + 1.5f * gl::TEXT_SIZE),
+		     (float)(24 * gl::PIXEL_SCALED - gl::TEXT_SIZE / 8)
 		   },
-		   gl::MIDDLE_TEXT_SIZE,
+		   gl::TEXT_SIZE,
 		   0.f,
 		   (Color){255, 255, 255, 255}
   );
@@ -212,10 +212,10 @@ fn void draw_maze_points(Texture2D *maze_atlas, Font *font) {
   rl::draw_text_ex(*font,
 		   "50 pts",
 		   {
-		     (float)(DRAW_POS_X + 1.5f * gl::MIDDLE_TEXT_SIZE),
-		     (float)(26 * gl::PIXEL_SCALED - gl::MIDDLE_TEXT_SIZE / 8)
+		     (float)(DRAW_POS_X + 1.5f * gl::TEXT_SIZE),
+		     (float)(26 * gl::PIXEL_SCALED - gl::TEXT_SIZE / 8)
 		   },
-		   gl::MIDDLE_TEXT_SIZE,
+		   gl::TEXT_SIZE,
 		   0.f,
 		   (Color){255, 255, 255, 255}
   );

@@ -32,9 +32,11 @@ c3c run
 - Blinky lacking the **'Elroy'** mechanic
 - Frighten ghost **blink** continuously instead of only when the timer is almost over
 - **Random number generator** is not fully accurate to the original
+- **No audio**
 ## License
 This project is licensed under the [MIT License](LICENSE.md)
 ## Acknowledgments
 + [The Pacman Dossier](https://pacman.holenet.info/#LvlSpecs)
 + [Pacman Textures](https://www.spriters-resource.com/arcade/pacman/)
 + [Why do Pinky and Inky have different behaviors when Pac-Man is facing up?](http://donhodges.com/pacman_pinky_explanation.htm)
++ [How frightened ghosts decide where to go](https://www.youtube.com/watch?v=eFP0_rkjwlY&t=409s)

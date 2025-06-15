@@ -21,8 +21,7 @@ const MAZE_HEIGHT = 31;
 const MAZE_WIDTH = 28;
 
 const FONT_BASE_SIZE = 128;
-const MIDDLE_TEXT_SIZE = SCALE * PIXEL_SIZE;
-const SMALL_TEXT_SIZE = (SCALE - 1) * PIXEL_SIZE;
+const TEXT_SIZE = SCALE * PIXEL_SIZE;
 
 const SPRITE_SIZE = 2 * gl::PIXEL_SIZE;
 const SPRITE_SIZE_SCALED = 2 * gl::PIXEL_SIZE * SCALE;
@@ -35,7 +34,7 @@ enum EventType : (inline Uint8 type) {
   GHOST_EATEN    = 0x01 << 4
 }
 
-// Sequence based on higher priority directions of ghosts
+// Sequence based on higher priority directions of ghosts in chase or scatter mode
 enum Direction : Uint8 (inline Uint8 type){
   NONE		= 0xF      ,
   UP		= 0x01     ,

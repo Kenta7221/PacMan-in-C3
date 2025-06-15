@@ -20,8 +20,8 @@ fn void? Fruit.init(&self, uint level) {
   const String SPRITESHEET_DIR = "assets/textures/fruits.png";
 
   self.pos = {
-    13 * gl::PIXEL_SCALED + (gl::PIXEL_SCALED / 2) - gl::SPRITE_SIZE,
-    20 * gl::PIXEL_SCALED - gl::SPRITE_SIZE
+    13 * gl::PIXEL_SCALED + (gl::PIXEL_SCALED / 2) - gl::SPRITE_SIZE_SCALED / 4,
+    20 * gl::PIXEL_SCALED - gl::SPRITE_SIZE_SCALED / 4
   };
   
   self.texture = rl::load_texture(SPRITESHEET_DIR);
