@@ -32,7 +32,6 @@ c3c run
 - Blinky lacking the **'Elroy'** mechanic
 - Frighten ghost **blink** continuously instead of only when the timer is almost over
 - **Random number generator** is not fully accurate to the original
-- No option to **scale the game UI** (text, spacing and objects are hardcoded)
 ## License
 This project is licensed under the [MIT License](LICENSE.md)
 ## Acknowledgments
