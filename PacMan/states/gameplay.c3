@@ -41,7 +41,8 @@ struct Gameplay {
   Uint8 eaten_dots;
   Uint8 eaten_ghosts;
   Uint8 global_ghosts_dot_counter;
-
+  Uint16 rng_index; // Decides the direction of frighten ghost
+  
   Timer *timer;
   GameUI ui;
     
@@ -57,10 +58,11 @@ struct Gameplay {
  @param [&in] entity_atlas : "Timer passed as null!"
 *>
 fn void? Gameplay.init(&self, Texture2D *entity_atlas, Timer *timer) {  
-  self.global_ghosts_dot_counter = 0;
+  self.flags |= GameplayState.START_LEVEL;
   self.eaten_dots = 0;
   self.eaten_ghosts = 0;
-  self.flags |= GameplayState.START_LEVEL;
+  self.global_ghosts_dot_counter = 0;
+  self.rng_index = 0;
 
   self.timer = timer;
   self.ui.init(entity_atlas)!;
@@ -80,9 +82,10 @@ fn void? Gameplay.init(&self, Texture2D *entity_atlas, Timer *timer) {
 
 fn void Gameplay.reset_level(&self) {
   self.flags = 0;
-  self.eaten_ghosts = 0;
   self.eaten_dots = 0;
+  self.eaten_ghosts = 0;
   self.global_ghosts_dot_counter = 0;
+  self.rng_index = 0;
 
   self.timer.reset();
   
@@ -249,7 +252,7 @@ fn void Gameplay.game_loop(&self) {
     if(idx == GhostType.INKY) { other_ghost = &self.ghosts[0]; }
     else if(idx == GhostType.CLYDE) { other_ghost = &self.ghosts[3]; }
 
-    ghost.move(&self.maze.tiles, ghost.get_target(&self.pacman, other_ghost), self.flags);
+    ghost.move(&self.maze.tiles, ghost.get_target(&self.pacman, other_ghost), self.flags, &self.rng_index);
   
     if(ghost.collision(self.pacman.pos)) {
       if(ghost.state_flags & GhostState.FRIGHTEN) {

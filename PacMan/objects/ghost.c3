@@ -247,8 +247,9 @@ fn void Ghost.leave_spawn(&self) {
 
 <*
  @param [&in] tiles
+ @param [&inout] rng_index
 *>
-fn void Ghost.move(&self, Tile *tiles, Int16[<2>] pacman_pos, Uint8 global_state) {
+fn void Ghost.move(&self, Tile *tiles, Int16[<2>] pacman_pos, Uint8 global_state, Uint16* rng_index) {
   if(!gl::is_aligned(self.pos) && self.dir != Direction.NONE) {
     self.pos += gl::get_speed_vector(self.dir, BASE_SPEED);
     return;
@@ -261,7 +262,8 @@ fn void Ghost.move(&self, Tile *tiles, Int16[<2>] pacman_pos, Uint8 global_state
   }
   
   if(self.state_flags & GhostState.FRIGHTEN) {
-    self.dir = get_rnd_dir(&self.pos, &self.dir, tiles);
+    *rng_index = (5 * *rng_index + 1) % 8192;
+    self.dir = get_rnd_dir(&self.pos, &self.dir, tiles, *rng_index);
     self.pos += gl::get_speed_vector(self.dir, BASE_SPEED);
     return;
   }
@@ -453,10 +455,15 @@ fn void increase_counter(Uint8 curr_ghost, Uint8 *counter, int level) {
  @param [&in] dir : "Dir passed as null!"
  @param [&in] tiles : "Maze tiles passed as null!"
 *>
-fn Uint8 get_rnd_dir(Int16[<2>] *pos, Uint8 *dir, Tile *tiles) {
-  Uint8 rng = (Uint8)rand(4);
+fn Uint8 get_rnd_dir(Int16[<2>] *pos, Uint8 *dir, Tile *tiles, Uint16 rng_index) {
+  Uint8 rng_output;
   
-  for(Uint8 i = rng; i < rng + 4; i++) {
+  if(rng_index <= 2064)                           { rng_output = 3; }
+  else if(rng_index >= 2064 && rng_index <= 4402) { rng_output = 2; }
+  else if(rng_index <= 6854)                      { rng_output = 1; }
+  else                                            { rng_output = 0; }
+  
+  for(Uint8 i = rng_output; i < rng_output + 4; i++) {
     Uint8 potential_dir = Direction.values[i % 4 + 1]; // +1 for skipping none direction
     if(is_valid_move(tiles, *pos, *dir, potential_dir, frighten_mode: true)) return potential_dir;
   }
