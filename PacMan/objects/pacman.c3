@@ -14,7 +14,8 @@ const BASE_SPEED @private = 4;
 
 struct PacMan {
   Int16[<2>] pos;
-  Uint8 lives;
+  Uint8 lives;  
+  TimeSpan lerp_amount;
   
   // Bit layout:
   // Bit 4-7 - early turn
@@ -32,7 +33,9 @@ fn void PacMan.init(&self, Texture2D *atlas_ptr) {
   self.set_at_start_pos();
   self.lives = 3;
 
-  self.animation.init(atlas_ptr, 0, 3, 0.06f);
+  self.animation.init(atlas_ptr, 0, 3, 0.05f);
+
+  self.lerp_amount = 0.0f;
 }
 
 fn void PacMan.set_at_start_pos(&self) {
@@ -54,9 +57,18 @@ fn void PacMan.move(&self, Tile *tiles) {
   Int16[<2>] next_pos;
   Tile next_tile;
 
+  defer {
+    if(!self.can_turn_180) {
+      if(gl::is_aligned(self.pos) || self.lerp_amount >= 1.f) self.lerp_amount = 0.0f;
+      self.lerp_amount += 0.14f;
+
+      self.pos = gl::tween_pos(self.pos, self.dirs & CURR_DIR_MASK, self.lerp_amount);
+    }
+  }
+  
+  if((self.dirs & CURR_DIR_MASK) == Direction.NONE) self.lerp_amount = 0.5f;
+  
   if(gl::in_tunnel((Int8[<2>])(self.pos / gl::PIXEL_SCALED))) {
-    Uint16[<2>] speed = gl::get_speed_vector(self.dirs, BASE_SPEED);
-    self.pos += speed;
     gl::handle_tunnel_wrap(&self.pos);
     return;
   }
@@ -90,11 +102,8 @@ fn void PacMan.move(&self, Tile *tiles) {
     self.can_turn_180 = true;
     return;
   }
-  
+
   self.can_turn_180 = false;
-  
-  Uint16[<2>] speed = gl::get_speed_vector(self.dirs, BASE_SPEED);
-  self.pos += speed;
 }
 
 fn void PacMan.draw(&self, TimeSpan dt, bool dead = false) {

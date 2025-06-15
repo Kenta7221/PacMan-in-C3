@@ -8,10 +8,6 @@ import gl;
 import maze;
 import timer;
 
-const FONT_BASE_SIZE = 64;
-const CHAR_SIZE = 32;
-const DRAW_FONT_SIZE = 36;
-
 struct DeathScreen {
   Font font;
   Timer *timer;
@@ -21,7 +17,7 @@ struct DeathScreen {
 fn void? DeathScreen.init(&self, Timer *timer) {
   const String FONT_DIR = "assets/fonts/emulogic.ttf";
 
-  self.font = rl::load_font_ex(FONT_DIR, FONT_BASE_SIZE, null, 0);
+  self.font = rl::load_font_ex(FONT_DIR, gl::TEXT_SIZE, null, 0);
   if(!rl::is_font_valid(self.font)) {
     io::printn("Font has not been loaded!");
     return io::FILE_NOT_FOUND?;
@@ -49,8 +45,12 @@ fn void DeathScreen.draw(&self) {
 
   rl::draw_text_ex(self.font,
 		   "Game   Over",
-		   { (Uint16)(gl::MAZE_WIDTH / 2 * gl::PIXEL_SCALED - 5 * CHAR_SIZE), 20 * gl::PIXEL_SCALED - 5 },
-		   DRAW_FONT_SIZE, 0.f,
+		   {
+		     10 * gl::TEXT_SIZE - gl::TEXT_SIZE / 2,
+		     20 * gl::TEXT_SIZE
+		   },
+		   gl::TEXT_SIZE,
+		   0.f,
 		   (Color){255, 0, 0, 255}
   );
 }

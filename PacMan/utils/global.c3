@@ -2,6 +2,8 @@ module gl;
 
 import rl;
 
+import std::io;
+
 alias Uint16 = ushort;
 alias Uint8 = char;
 alias Int16  = short;
@@ -43,6 +45,44 @@ enum Direction : Uint8 (inline Uint8 type){
   RIGHT		= 0x01 << 3,
 }
 
+fn Int16[<2>] tween_pos(Int16[<2>] pos, Uint8 dir, float t) {
+  Int16[<2>] next_tile = pos / gl::PIXEL_SCALED;
+  Int16[<2>] prev_tile = pos / gl::PIXEL_SCALED;
+
+  if(t > 1.f) t = 1.f;
+  if(t < 0.f) t = 0.f;
+  
+  switch(dir) {
+    case Direction.UP:
+      if(!is_aligned(pos)) {
+	prev_tile.y += 1;
+	break;
+      }
+      
+      next_tile.y -= 1;
+      break;             // Checking if it is positive value for the tunnel wrapper to work properly 
+    case Direction.LEFT: // 
+      if(!is_aligned(pos) && pos.x > 0) {
+	prev_tile.x += 1;
+	break;
+      }
+      
+      next_tile.x -= 1;
+      break;
+    case Direction.RIGHT	: next_tile.x += 1; break;
+    case Direction.DOWN		: next_tile.y += 1; break;
+    default			: return pos;
+  }
+
+  next_tile *= gl::PIXEL_SCALED;
+  prev_tile *= gl::PIXEL_SCALED;
+  
+  return {
+    (Int16)(prev_tile.x + (float)(next_tile.x - prev_tile.x) * t),
+    (Int16)(prev_tile.y + (float)(next_tile.y - prev_tile.y) * t)
+  };
+}
+
 fn Uint16[<2>] get_speed_vector(Uint8 dir, Uint8 velocity = 1) {
   dir &= 0x0F; 
   Uint16[<2>] speed = {0, 0};
@@ -72,7 +112,7 @@ fn Int16[<2>] get_tile_offset(Int16[<2>] pos, Uint8 dir) {
   return pos;
 }
 
-fn bool is_aligned(Int16[<2>] pos) {
+fn bool is_aligned(Int16[<2>] pos) @inline {
   return pos.x % gl::PIXEL_SCALED == 0 &&
          pos.y % gl::PIXEL_SCALED == 0;
 }

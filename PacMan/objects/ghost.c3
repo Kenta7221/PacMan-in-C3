@@ -31,7 +31,8 @@ enum GhostState : Uint8 (inline Uint8 state) {
 struct Ghost {
   Int16[<2>] pos;
   Uint8 dir;
-
+  TimeSpan lerp_amount;
+  
   // Bit layout:
   // Bit 4 - dead
   // Bit 3 - frighten mode
@@ -57,7 +58,7 @@ fn void Ghost.init(&self, Uint8 ghost_type = 0, Texture2D *atlas_ptr) {
 
   const TargetCallback[4] CALLBACK = { &blinky_target, &pinky_target, &inky_target, &clyde_target };
   
-  self.animation.init(atlas_ptr, 0, 2, 0.12f);
+  self.animation.init(atlas_ptr, 0, 2, 0.15f);
   
   self.set_at_start_pos(ghost_type);
   
@@ -74,7 +75,8 @@ fn void Ghost.set_at_start_pos(&self, Uint8 ghost_type = 0) {
   };
 
   self.pos = START_POS[ghost_type];
-
+  self.lerp_amount = 0.0f;
+  
   switch(ghost_type) {
     case GhostType.BLINKY: self.dir = Direction.LEFT; break;
     case GhostType.INKY:
@@ -188,29 +190,30 @@ fn void Ghost.return_to_spawn(&self, Tile *tiles) {
   gl::handle_tunnel_wrap(&self.pos);
 }
 
-fn void Ghost.leave_spawn(&self) {
+fn void Ghost.leave_spawn(&self) {  
   // Center the ghost y pos before leaving
   const Int16[<2>] CENTER = {
     13 * gl::PIXEL_SCALED + gl::PIXEL_SCALED / 2,
     17 * gl::PIXEL_SCALED,
   };
 
+  
+  const Int16[<2>] EXIT = {
+    13 * gl::PIXEL_SCALED + gl::PIXEL_SCALED / 2,
+    14 * gl::PIXEL_SCALED
+  };
+
   if(self.pos.x != CENTER.x && self.pos.y > CENTER.y) {
     self.dir = Direction.UP;
-    self.pos += gl::get_speed_vector(self.dir, BASE_SPEED / 2);
+    self.pos += gl::get_speed_vector(self.dir, BASE_SPEED);
     return;
   }
   
   if(self.pos.x != CENTER.x && self.pos.y < CENTER.y) {
     self.dir = Direction.DOWN;
-    self.pos += gl::get_speed_vector(self.dir, BASE_SPEED / 2);
+    self.pos += gl::get_speed_vector(self.dir, BASE_SPEED);
     return;
   }
-    
-  const Int16[<2>] EXIT = {
-    13 * gl::PIXEL_SCALED + gl::PIXEL_SCALED / 2,
-    14 * gl::PIXEL_SCALED
-  };
   
   if(self.pos.y == EXIT.y) {
     int choice = rand(2);
@@ -246,17 +249,20 @@ fn void Ghost.leave_spawn(&self) {
 }
 
 <*
- @param [&in] tiles
- @param [&inout] rng_index
+ @param [&in] tiles : "Tiles was passed as null!"
+ @param [&inout] rng_index "Rng index was passed as null!"
 *>
 fn void Ghost.move(&self, Tile *tiles, Int16[<2>] pacman_pos, Uint8 global_state, Uint16* rng_index) {
-  if(!gl::is_aligned(self.pos) && self.dir != Direction.NONE) {
-    self.pos += gl::get_speed_vector(self.dir, BASE_SPEED);
-    return;
+  defer {
+    if(gl::is_aligned(self.pos) || self.lerp_amount >= 1.f) self.lerp_amount = 0.0f;
+    self.lerp_amount += 0.14f;
+
+    self.pos = gl::tween_pos(self.pos, self.dir, self.lerp_amount);
   }
+  
+  if(!gl::is_aligned(self.pos) && self.dir != Direction.NONE) return;
 
   if(gl::in_tunnel((Int8[<2>])(self.pos / gl::PIXEL_SCALED))) {
-    self.pos += gl::get_speed_vector(self.dir, BASE_SPEED);
     gl::handle_tunnel_wrap(&self.pos);
     return;
   }
@@ -264,7 +270,6 @@ fn void Ghost.move(&self, Tile *tiles, Int16[<2>] pacman_pos, Uint8 global_state
   if(self.state_flags & GhostState.FRIGHTEN) {
     *rng_index = (5 * *rng_index + 1) % 8192;
     self.dir = get_rnd_dir(&self.pos, &self.dir, tiles, *rng_index);
-    self.pos += gl::get_speed_vector(self.dir, BASE_SPEED);
     return;
   }
 
@@ -290,7 +295,6 @@ fn void Ghost.move(&self, Tile *tiles, Int16[<2>] pacman_pos, Uint8 global_state
   }
   
   self.dir = best_dir;
-  self.pos += gl::get_speed_vector(self.dir, BASE_SPEED);
 }
 
 fn void Ghost.draw(&self, Uint8 ghost_type, TimeSpan dt) {
