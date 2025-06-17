@@ -12,7 +12,7 @@ This project is a **partial recreation of the classic PacMan arcade game**, writ
 - Linux or Windows OS
 - C3 compiler (c3c)
 ## Instalation
-All the necessary steps in order to download the C3 compiler can be found on the official website [Install C3 Compiler](https://c3-lang.org/getting-started/prebuilt-binaries/)
+All the necessary steps in order to download the C3 compiler can be found on the official website: [Install C3 Compiler](https://c3-lang.org/getting-started/prebuilt-binaries/)
 ## Compiling a program
 1. Open a terminal and navigate to the PacMan
 ```bash
@@ -23,6 +23,11 @@ cd PacMan
 c3c build
 c3c run
 ```
+3. If the window is too big or too small for you, navigate to the subdirectory and open a file called global.c3. There you will find a variable called SCALE, which you can change to your personal preference:
+```bash
+# Your prefered scale value, e.g. 4
+const SCALE = 4;
+```
 ## How to play
 - Start the game by pressing **space bar**
 - Move using **WASD**
@@ -30,7 +35,6 @@ c3c run
 - The game ends when **PacMan loses all his lives**
 ## Missing features
 - Blinky lacking the **'Elroy'** mechanic
-- **Non-scalable speed vector** for ghost in some states
 - Frighten ghost **blink** continuously instead of only when the timer is almost over
 - **No audio**
 ## License

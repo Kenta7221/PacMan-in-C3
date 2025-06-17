@@ -157,7 +157,7 @@ fn void Gameplay.update(&self, GameState *state, TimeSpan *pause) {
 
     if(self.pacman.lives == 0) {
       ui::save_high_score(self.ui.high_score);      
-      *state = END_SCREEN;
+      *state = DEATH_SCREEN;
       return;
     }
       
@@ -244,8 +244,6 @@ fn void Gameplay.game_loop(&self) {
   }
 
   foreach(idx, &ghost : self.ghosts) {
-    //if(idx == GhostType.INKY) print_ghost_stat(ghost);
-    
     if(dot_eaten && idx != GhostType.BLINKY) ghost::increase_counter((Uint8)idx, &ghost.dot_counter, self.timer.level);
     
     if(ghost::spawn_handler((Uint8)idx, ghost, self, dot_eaten)) continue;
@@ -269,8 +267,8 @@ fn void Gameplay.game_loop(&self) {
 	continue;
       }
 
-      // self.flags |= GameplayState.PACMAN_DIED;
-      // self.flags |= GameplayState.RESET_LEVEL;
+      self.flags |= GameplayState.PACMAN_DIED;
+      self.flags |= GameplayState.RESET_LEVEL;
       return;
     }
   }  

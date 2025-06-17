@@ -1,7 +1,6 @@
 module ghost;
 
 import std::io;
-import std::math::random;
 
 import gl;
 import rl;
@@ -11,7 +10,7 @@ import maze;
 import pacman;
 import game_ctx::gameplay;
 
-const SPAWN_SPEED = 0.01f;
+const SPAWN_SPEED = 0.02f;
 const FRIGHTEN_SPEED = 0.07f;
 const NORMAL_SPEED = 0.13f;
 
@@ -54,10 +53,10 @@ struct Ghost {
 
 fn void Ghost.init(&self, Uint8 ghost_type = 0, Texture2D *atlas_ptr) {
   const Int16[<2>][4] FIXED_TILES_POS = {
-    {  25 * gl::PIXEL_SCALED                        , 0 }, // Blinky
-    {  2 * gl::PIXEL_SCALED                         , 0 }, // Pinky
-    { (gl::MAZE_WIDTH - 1) * gl::PIXEL_SCALED       , (gl::TOP_UI_SIZE + gl::MAZE_HEIGHT) * gl::PIXEL_SCALED  }, // Inky
-    {  0                                            , (gl::TOP_UI_SIZE + gl::MAZE_HEIGHT) * gl::PIXEL_SCALED  }, // Clyde
+    {  25 * gl::TILE_SCALED                        , 0 }, // Blinky
+    {  2 * gl::TILE_SCALED                         , 0 }, // Pinky
+    { (gl::MAZE_WIDTH - 1) * gl::TILE_SCALED       , (gl::TOP_UI_SIZE + gl::MAZE_HEIGHT) * gl::TILE_SCALED  }, // Inky
+    {  0                                            , (gl::TOP_UI_SIZE + gl::MAZE_HEIGHT) * gl::TILE_SCALED  }, // Clyde
   };
 
   const TargetCallback[4] CALLBACK = { &blinky_target, &pinky_target, &inky_target, &clyde_target };
@@ -72,10 +71,10 @@ fn void Ghost.init(&self, Uint8 ghost_type = 0, Texture2D *atlas_ptr) {
 
 fn void Ghost.set_at_start_pos(&self, Uint8 ghost_type = 0) {
   const Int16[<2>][4] START_POS = {
-    { 13 * gl::PIXEL_SCALED + gl::PIXEL_SCALED / 2, 14 * gl::PIXEL_SCALED }, // Blinky
-    { 13 * gl::PIXEL_SCALED + gl::PIXEL_SCALED / 2, 17 * gl::PIXEL_SCALED }, // Pinky
-    { 11 * gl::PIXEL_SCALED + gl::PIXEL_SCALED / 2, 17 * gl::PIXEL_SCALED }, // Inky
-    { 15 * gl::PIXEL_SCALED + gl::PIXEL_SCALED / 2, 17 * gl::PIXEL_SCALED }, // Clyde
+    { 13 * gl::TILE_SCALED + gl::TILE_SCALED / 2, 14 * gl::TILE_SCALED }, // Blinky
+    { 13 * gl::TILE_SCALED + gl::TILE_SCALED / 2, 17 * gl::TILE_SCALED }, // Pinky
+    { 11 * gl::TILE_SCALED + gl::TILE_SCALED / 2, 17 * gl::TILE_SCALED }, // Inky
+    { 15 * gl::TILE_SCALED + gl::TILE_SCALED / 2, 17 * gl::TILE_SCALED }, // Clyde
   };
 
   self.pos = START_POS[ghost_type];
@@ -95,8 +94,8 @@ fn void Ghost.set_at_start_pos(&self, Uint8 ghost_type = 0) {
 }
 
 fn bool Ghost.collision(&self, Int16[<2>] pacman_pos) {
-  Int8[<2>] pacman_tile = (Int8[<2>])(pacman_pos / gl::PIXEL_SCALED);
-  Int8[<2>] ghost_tile = (Int8[<2>])(self.pos / gl::PIXEL_SCALED);
+  Int8[<2>] pacman_tile = (Int8[<2>])(pacman_pos / gl::TILE_SCALED);
+  Int8[<2>] ghost_tile = (Int8[<2>])(self.pos / gl::TILE_SCALED);
 
   return ghost_tile == pacman_tile;
 }
@@ -122,30 +121,27 @@ fn void Ghost.turn_180(&self) {
 fn void Ghost.roam_in_spawn(&self, Tile *tiles) {
   Int16 start_y;
   Int16 end_y;
-  
-  if(self.lerp_amount >= 1.f) self.lerp_amount = 0.0f;
+
+  if(self.lerp_amount > 1.f) self.lerp_amount = 0.0f;
   self.lerp_amount += SPAWN_SPEED;
   
-  // Why though? I have no idea but it works...
-  Int16[<2>] next_pos = self.pos;
+  if(self.pos.y == 16 * gl::TILE_SCALED + gl::TILE_SCALED / 2 && self.dir == Direction.UP) {
+    self.dir = Direction.DOWN;
+    self.lerp_amount = SPAWN_SPEED;
+  } else if(self.pos.y == 18 * gl::TILE_SCALED - gl::TILE_SCALED / 2 && self.dir == Direction.DOWN) {
+    self.dir = Direction.UP;
+    self.lerp_amount = SPAWN_SPEED;
+  }
+    
   if(self.dir == Direction.UP) {
-    start_y = 18 * gl::PIXEL_SCALED - gl::PIXEL_SCALED;
-    end_y = 16 * gl::PIXEL_SCALED;
-    next_pos.y -= (Int8)gl::PIXEL_SCALED + gl::PIXEL_SCALED / 2 ;
-  }
-  else {
-    start_y = 16 * gl::PIXEL_SCALED + gl::PIXEL_SCALED;
-    end_y = 18 * gl::PIXEL_SCALED;
-    next_pos.y += (Int8)gl::PIXEL_SCALED + gl::PIXEL_SCALED / 2 ;
+    start_y = 18 * gl::TILE_SCALED - gl::TILE_SCALED / 2;
+    end_y = 16 * gl::TILE_SCALED + gl::TILE_SCALED / 2;
+  } else if(self.dir == Direction.DOWN) {
+    start_y =  16 * gl::TILE_SCALED + gl::TILE_SCALED / 2;
+    end_y = 18 * gl::TILE_SCALED - gl::TILE_SCALED / 2;;
   }
   
-  if(next_pos.y % gl::PIXEL_SCALED == 0)  {
-    self.lerp_amount = 0.0f;
-    Tile next_tile = maze::get_tile_at(tiles, next_pos);
-    if(next_tile.type == WALL) self.turn_180();
-  }
-  
-  self.pos = gl::tween_by_tiles(
+  self.pos = gl::tween_pos_by_tiles(
     {
       self.pos.x,
       start_y
@@ -163,13 +159,13 @@ fn void Ghost.roam_in_spawn(&self, Tile *tiles) {
 *>
 fn void Ghost.return_to_spawn(&self, Tile *tiles) {
   const Int16[<2>] EXIT = {
-    13 * gl::PIXEL_SCALED + gl::PIXEL_SCALED / 2,
-    14 * gl::PIXEL_SCALED
+    13 * gl::TILE_SCALED + gl::TILE_SCALED / 2,
+    14 * gl::TILE_SCALED
   };
   
   const Int16[<2>] CENTER = {
-    13 * gl::PIXEL_SCALED + gl::PIXEL_SCALED / 2,
-    17 * gl::PIXEL_SCALED,
+    13 * gl::TILE_SCALED + gl::TILE_SCALED / 2,
+    17 * gl::TILE_SCALED,
   };
 
   bool update = true;
@@ -180,10 +176,10 @@ fn void Ghost.return_to_spawn(&self, Tile *tiles) {
     
       if(self.state_flags & GhostState.ENTERING_SPAWN) {
 	self.lerp_amount += SPAWN_SPEED;
-	self.pos = gl::tween_by_tiles(EXIT, CENTER, self.lerp_amount);
+	self.pos = gl::tween_pos_by_tiles(EXIT, CENTER, self.lerp_amount);
       } else {
 	self.lerp_amount += NORMAL_SPEED;
-	self.pos = gl::tween_pos(self.pos, self.dir, self.lerp_amount);
+	self.pos = gl::tween_pos_by_dir(self.pos, self.dir, self.lerp_amount);
       }
     
       gl::handle_tunnel_wrap(&self.pos);
@@ -192,7 +188,7 @@ fn void Ghost.return_to_spawn(&self, Tile *tiles) {
 
   // Entering Spawn
   Int16 overshoot = EXIT.x - self.pos.x;
-  if(overshoot >= -(gl::PIXEL_SCALED / 2) && overshoot <= gl::PIXEL_SCALED / 2 && self.pos.y == EXIT.y) {
+  if(overshoot >= -(gl::TILE_SCALED / 2) && overshoot <= gl::TILE_SCALED / 2 && self.pos.y == EXIT.y) {
     self.state_flags |= GhostState.ENTERING_SPAWN;
     self.pos.x = EXIT.x;
   }
@@ -223,7 +219,7 @@ fn void Ghost.return_to_spawn(&self, Tile *tiles) {
     if(!is_valid_move(tiles, self.pos, self.dir, potential_dir)) continue;
     
     Int16[<2>] next_pos = gl::get_tile_offset(self.pos, potential_dir);
-    Uint16 dist = sqrt_dist(next_pos / gl::PIXEL_SCALED, CENTER / gl::PIXEL_SCALED);
+    Uint16 dist = sqrt_dist(next_pos / gl::TILE_SCALED, CENTER / gl::TILE_SCALED);
     if(dist < min_dist) {
       min_dist = dist;
       best_dir = potential_dir;
@@ -243,15 +239,15 @@ fn void Ghost.return_to_spawn(&self, Tile *tiles) {
  @param [&inout] rng_index "Rng index was passed as null!"
 *>
 fn void Ghost.leave_spawn(&self, Tile *tiles, Uint16* rng_index) {
-  const CENTER_X = 13 * gl::PIXEL_SCALED + gl::PIXEL_SCALED / 2;
-  const CENTER_Y = 17 * gl::PIXEL_SCALED;
-  const EXIT_Y  =  14 * gl::PIXEL_SCALED;
+  const CENTER_X = 13 * gl::TILE_SCALED + gl::TILE_SCALED / 2;
+  const CENTER_Y = 17 * gl::TILE_SCALED;
+  const EXIT_Y  =  14 * gl::TILE_SCALED;
   
   Int16[<2>] start, end;
   defer {
     if(self.lerp_amount >= 1.f) self.lerp_amount = 0.0f;
     self.lerp_amount += SPAWN_SPEED;
-    self.pos = gl::tween_by_tiles(start, end, self.lerp_amount);
+    self.pos = gl::tween_pos_by_tiles(start, end, self.lerp_amount);
   }
   
   if(self.pos.y == EXIT_Y) {
@@ -278,10 +274,10 @@ fn void Ghost.leave_spawn(&self, Tile *tiles, Uint16* rng_index) {
     end   = {CENTER_X, EXIT_Y};
     return;
   }
-
   
   // Just teleport ghost to the y center
   if(self.pos.y != CENTER_Y) {
+    self.lerp_amount = 0.f;
     start = { self.pos.x, CENTER_Y };
     end   = { self.pos.x, CENTER_Y };
     return;
@@ -289,14 +285,14 @@ fn void Ghost.leave_spawn(&self, Tile *tiles, Uint16* rng_index) {
   
   if(self.pos.x < CENTER_X) {
     self.dir = Direction.RIGHT;
-    start = { 11 * gl::PIXEL_SCALED + gl::PIXEL_SCALED / 2, CENTER_Y };
+    start = { 11 * gl::TILE_SCALED + gl::TILE_SCALED / 2, CENTER_Y };
     end   = { CENTER_X                                    , CENTER_Y };
     return;
   }
 
   if(self.pos.x > CENTER_X) {
     self.dir = Direction.LEFT;
-    start = { 15 * gl::PIXEL_SCALED + gl::PIXEL_SCALED / 2, CENTER_Y };
+    start = { 15 * gl::TILE_SCALED + gl::TILE_SCALED / 2, CENTER_Y };
     end   = { CENTER_X                                    , CENTER_Y };
     return;
   }
@@ -313,12 +309,12 @@ fn void Ghost.move(&self, Tile *tiles, Int16[<2>] pacman_pos, Uint8 global_state
     if(self.state_flags & GhostState.FRIGHTEN ){ self.lerp_amount += FRIGHTEN_SPEED; }
     else { self.lerp_amount += NORMAL_SPEED; }
 
-    self.pos = gl::tween_pos(self.pos, self.dir, self.lerp_amount);
+    self.pos = gl::tween_pos_by_dir(self.pos, self.dir, self.lerp_amount);
   }
   
   if(!gl::is_aligned(self.pos) && self.dir != Direction.NONE) return;
 
-  if(gl::in_tunnel((Int8[<2>])(self.pos / gl::PIXEL_SCALED))) {
+  if(gl::in_tunnel((Int8[<2>])(self.pos / gl::TILE_SCALED))) {
     gl::handle_tunnel_wrap(&self.pos);
     return;
   }
@@ -342,7 +338,7 @@ fn void Ghost.move(&self, Tile *tiles, Int16[<2>] pacman_pos, Uint8 global_state
     if(!is_valid_move(tiles, self.pos, self.dir, potential_dir)) continue;
     
     Int16[<2>] next_pos = gl::get_tile_offset(self.pos, potential_dir);
-    Uint16 dist = sqrt_dist(next_pos / gl::PIXEL_SCALED, target_pos / gl::PIXEL_SCALED);
+    Uint16 dist = sqrt_dist(next_pos / gl::TILE_SCALED, target_pos / gl::TILE_SCALED);
     if(dist < min_dist) {
       min_dist = dist;
       best_dir = potential_dir;
@@ -392,13 +388,13 @@ fn Uint16 sqrt_dist(Int16[<2>] a, Int16[<2>] b) @private {
 
 fn bool inside_spawn(Int16[<2>] pos, Uint8 state_flags) {
   // Calculating for the center of ghost
-  pos.y -= (Int8)gl::PIXEL_SCALED;
+  pos.y -= (Int8)gl::TILE_SCALED;
   
   const Uint16[<4>] SPAWN_AREA = {
-    11 * gl::PIXEL_SCALED,  // x pos
-    16 * gl::PIXEL_SCALED,  // width
-    12 * gl::PIXEL_SCALED,  // y pos
-    28 * gl::PIXEL_SCALED,  // height
+    11 * gl::TILE_SCALED,  // x pos
+    16 * gl::TILE_SCALED,  // width
+    12 * gl::TILE_SCALED,  // y pos
+    28 * gl::TILE_SCALED,  // height
   };
   
   return pos.x >= SPAWN_AREA.x &&
@@ -450,7 +446,7 @@ fn bool is_valid_move(Tile *tiles,
   
   if(next_tile.type == WALL) return false;
 
-  if(in_spawn_penalty((Int8[<2>])(pos / gl::PIXEL_SCALED)) && !dead) {
+  if(in_spawn_penalty((Int8[<2>])(pos / gl::TILE_SCALED)) && !dead) {
     // Ghost in frighten mode temporarly can move up in these zones
     if(frighten_mode && potential_dir == Direction.DOWN) return false;
     if(!frighten_mode && (potential_dir == Direction.DOWN || potential_dir == Direction.UP)) return false;
@@ -555,7 +551,8 @@ fn bool spawn_handler(Uint8 ghost_type, Ghost *ghost, Gameplay *ctx, bool dot_ea
 			ghost.state_flags,
 			(bool)(ctx.flags & GameplayState.USE_GLOBAL_COUNTER),
 			ctx.global_ghosts_dot_counter,
-			ctx.timer.level) && prev_ghost_leaves_spawn || ghost_type == GhostType.BLINKY) {
+			ctx.timer.level) && prev_ghost_leaves_spawn || ghost_type == GhostType.BLINKY
+  ) {
       
     if(exceeds_time) ctx.timer.reset_dot_not_eaten();
       
@@ -575,13 +572,13 @@ fn bool spawn_handler(Uint8 ghost_type, Ghost *ghost, Gameplay *ctx, bool dot_ea
 *>
 fn Int16[<2>] blinky_target(PacMan *pacman, Ghost *other = null) {  
   Int16[<2>] pacman_tile = {
-    pacman.pos.x / gl::PIXEL_SCALED,
-    pacman.pos.y / gl::PIXEL_SCALED
+    pacman.pos.x / gl::TILE_SCALED,
+    pacman.pos.y / gl::TILE_SCALED
   };
   
   return (Int16[<2>]){
-    pacman_tile.x * gl::PIXEL_SCALED,
-    pacman_tile.y * gl::PIXEL_SCALED
+    pacman_tile.x * gl::TILE_SCALED,
+    pacman_tile.y * gl::TILE_SCALED
   };
 }
 
@@ -592,8 +589,8 @@ fn Int16[<2>] pinky_target(PacMan *pacman, Ghost *other = null) {
   const char STEP_AHEAD = 4;
   
   Int16[<2>] pacman_tile = {
-    pacman.pos.x / gl::PIXEL_SCALED,
-    pacman.pos.y / gl::PIXEL_SCALED
+    pacman.pos.x / gl::TILE_SCALED,
+    pacman.pos.y / gl::TILE_SCALED
   };
 
   char dir = pacman.dirs & 0x0F;
@@ -617,8 +614,8 @@ fn Int16[<2>] pinky_target(PacMan *pacman, Ghost *other = null) {
   }
 
   return (Int16[<2>]){
-    pacman_tile.x * gl::PIXEL_SCALED,
-    pacman_tile.y * gl::PIXEL_SCALED
+    pacman_tile.x * gl::TILE_SCALED,
+    pacman_tile.y * gl::TILE_SCALED
   };
 }
 
@@ -630,8 +627,8 @@ fn Int16[<2>] inky_target(PacMan *pacman, Ghost *blinky) {
   const char STEP_AHEAD = 2;
 
   Int16[<2>] pacman_tile = {
-    pacman.pos.x / gl::PIXEL_SCALED,
-    pacman.pos.y / gl::PIXEL_SCALED
+    pacman.pos.x / gl::TILE_SCALED,
+    pacman.pos.y / gl::TILE_SCALED
   };
 
   char dir = pacman.dirs & 0x0F;
@@ -655,13 +652,13 @@ fn Int16[<2>] inky_target(PacMan *pacman, Ghost *blinky) {
   }
 
   Int16[<2>] blinky_tile = {
-    blinky.pos.x / gl::PIXEL_SCALED,
-    blinky.pos.y / gl::PIXEL_SCALED
+    blinky.pos.x / gl::TILE_SCALED,
+    blinky.pos.y / gl::TILE_SCALED
   };
   
   Int16[<2>] target_pos = {
-    (2 * (pacman_tile.x - blinky_tile.x) + blinky_tile.x) * gl::PIXEL_SCALED,
-    (2 * (pacman_tile.y - blinky_tile.y) + blinky_tile.y) * gl::PIXEL_SCALED
+    (2 * (pacman_tile.x - blinky_tile.x) + blinky_tile.x) * gl::TILE_SCALED,
+    (2 * (pacman_tile.y - blinky_tile.y) + blinky_tile.y) * gl::TILE_SCALED
   };
   
   return target_pos;
@@ -675,24 +672,24 @@ fn Int16[<2>] clyde_target(PacMan *pacman, Ghost *clyde) {
   const int RADIUS = 8 * 8;
   const Int16[<2>] CLYDE_TARGET_POS = {
     0,
-    (gl::TOP_UI_SIZE + gl::MAZE_HEIGHT) * gl::PIXEL_SCALED
+    (gl::TOP_UI_SIZE + gl::MAZE_HEIGHT) * gl::TILE_SCALED
   };
   
   Int8[<2>] pacman_tile = {
-    (Int8)(pacman.pos.x / gl::PIXEL_SCALED),
-    (Int8)(pacman.pos.y / gl::PIXEL_SCALED)
+    (Int8)(pacman.pos.x / gl::TILE_SCALED),
+    (Int8)(pacman.pos.y / gl::TILE_SCALED)
   };
 
   Int8[<2>] clyde_tile = {
-    (Int8)(clyde.pos.x / gl::PIXEL_SCALED),
-    (Int8)(clyde.pos.y / gl::PIXEL_SCALED)
+    (Int8)(clyde.pos.x / gl::TILE_SCALED),
+    (Int8)(clyde.pos.y / gl::TILE_SCALED)
   };
   
   int dist = sqrt_dist(pacman_tile, clyde_tile);
   if(dist > RADIUS) {
     return {
-      pacman_tile.x * gl::PIXEL_SCALED,
-      pacman_tile.y * gl::PIXEL_SCALED
+      pacman_tile.x * gl::TILE_SCALED,
+      pacman_tile.y * gl::TILE_SCALED
     };
   }
   

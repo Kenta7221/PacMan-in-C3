@@ -24,12 +24,12 @@ fn void? TitleScreen.init(&self, Texture2D *entity_atlas, Timer *timer) {
   const String MAZE_ATLAS_DIR = "assets/textures/maze-spritesheet.png";
   const String FONT_DIR = "assets/fonts/emulogic.ttf";
 
-  const Int16    GHOST_DRAW_POS_X = 5 * gl::PIXEL_SCALED;
+  const Int16    GHOST_DRAW_POS_X = 5 * gl::TILE_SCALED;
   const Int16[4] GHOST_DRAW_POS_Y = {
-    8  * gl::PIXEL_SCALED, // Blinky
-    11 * gl::PIXEL_SCALED, // Pinky
-    14 * gl::PIXEL_SCALED, // Inky
-    17 * gl::PIXEL_SCALED, // Clyde
+    8  * gl::TILE_SCALED, // Blinky
+    11 * gl::TILE_SCALED, // Pinky
+    14 * gl::TILE_SCALED, // Inky
+    17 * gl::TILE_SCALED, // Clyde
   };
 
   self.entity_atlas = malloc(Texture2D.sizeof);
@@ -101,7 +101,7 @@ fn void TitleScreen.draw(&self, TimeSpan dt) {
   rl::draw_text_ex(self.font,
 		   "2025 made by Kenta",
 		   {
-		     (float)(self.ghosts[3].pos.x + gl::TEXT_SIZE),
+		     (float)(self.ghosts[3].pos.x + gl::TEXT_SIZE + gl::TEXT_SIZE / 2),
 		     (float)(self.ghosts[3].pos.y + 8 * gl::SPRITE_SIZE_SCALED)
 		   },
 		   gl::TEXT_SIZE,
@@ -161,16 +161,16 @@ fn void draw_ghost_with_name(Ghost *ghost, Uint8 ghost_type, Font *font, ZString
 *>
 fn void draw_maze_points(Texture2D *maze_atlas, Font *font) {
   const Uint8[<2>] ENERGIZER_UV = {
-   ((48 - 1) % 16) * gl::PIXEL_SIZE + ( (48 - 1) % 16) * gl::PADDING + gl::PADDING,
-   ((48 - 1) / 16) * gl::PIXEL_SIZE + ( (48 - 1) / 16) * gl::PADDING + gl::PADDING
+   ((48 - 1) % 16) * gl::TILE_SIZE + ( (48 - 1) % 16) * gl::PADDING + gl::PADDING,
+   ((48 - 1) / 16) * gl::TILE_SIZE + ( (48 - 1) / 16) * gl::PADDING + gl::PADDING
   };
 
   const Uint8[<2>] DOT_UV = {
-    ((46 - 1) % 16) * gl::PIXEL_SIZE + ( (46 - 1) % 16) * gl::PADDING + gl::PADDING,
-    ((46 - 1) / 16) * gl::PIXEL_SIZE + ( (46 - 1) / 16) * gl::PADDING + gl::PADDING,
+    ((46 - 1) % 16) * gl::TILE_SIZE + ( (46 - 1) % 16) * gl::PADDING + gl::PADDING,
+    ((46 - 1) / 16) * gl::TILE_SIZE + ( (46 - 1) / 16) * gl::PADDING + gl::PADDING,
   };
     
-  const Int16 DRAW_POS_X = 10 * gl::PIXEL_SCALED;
+  const Int16 DRAW_POS_X = 10 * gl::TILE_SCALED;
 
   Rectangle src;
   Rectangle dest;
@@ -178,15 +178,15 @@ fn void draw_maze_points(Texture2D *maze_atlas, Font *font) {
   src = {
     (float)DOT_UV.x,
     (float)DOT_UV.y,
-    gl::PIXEL_SIZE,
-    gl::PIXEL_SIZE
+    gl::TILE_SIZE,
+    gl::TILE_SIZE
   };
   
   dest = {
     DRAW_POS_X,
-    24 * gl::PIXEL_SCALED,
-    gl::PIXEL_SCALED,
-    gl::PIXEL_SCALED
+    24 * gl::TILE_SCALED,
+    gl::TILE_SCALED,
+    gl::TILE_SCALED
   };
             
   rl::draw_texture_pro(*maze_atlas, src, dest, (float[<2>]){0, 0}, 0, (Color){255, 255, 255, 255});
@@ -195,7 +195,7 @@ fn void draw_maze_points(Texture2D *maze_atlas, Font *font) {
 		   "10 pts",
 		   {
 		     (float)(DRAW_POS_X + 1.5f * gl::TEXT_SIZE),
-		     (float)(24 * gl::PIXEL_SCALED - gl::TEXT_SIZE / 8)
+		     (float)(24 * gl::TILE_SCALED - gl::TEXT_SIZE / 8)
 		   },
 		   gl::TEXT_SIZE,
 		   0.f,
@@ -205,7 +205,7 @@ fn void draw_maze_points(Texture2D *maze_atlas, Font *font) {
   src.x = ENERGIZER_UV.x;
   src.y = ENERGIZER_UV.y;
 
-  dest.y = 26 * gl::PIXEL_SCALED;
+  dest.y = 26 * gl::TILE_SCALED;
   
   rl::draw_texture_pro(*maze_atlas, src, dest, (float[<2>]){0, 0}, 0, (Color){255, 255, 255, 255});
   
@@ -213,7 +213,7 @@ fn void draw_maze_points(Texture2D *maze_atlas, Font *font) {
 		   "50 pts",
 		   {
 		     (float)(DRAW_POS_X + 1.5f * gl::TEXT_SIZE),
-		     (float)(26 * gl::PIXEL_SCALED - gl::TEXT_SIZE / 8)
+		     (float)(26 * gl::TILE_SCALED - gl::TEXT_SIZE / 8)
 		   },
 		   gl::TEXT_SIZE,
 		   0.f,

@@ -8,26 +8,6 @@ import hack;
 import libc;
 import std::io;
 
-<*
- @param [&out] high_score : "High Score passed as null!"
-*>
-fn void load_high_score(uint *high_score) @inline @private {
-  String temp = hack::HIGHEST_SCORE;
-  *high_score = temp.to_uint()!!;
-}
-
-fn void save_high_score(uint high_score) {
-  File file;
-  ZString str = (ZString)mem::new_array(char, 12);
-  libc::sprintf(str, "%d", high_score);
-  
-  file = file::open("assets/high_score.bin", "wb")!!;
-  file.write(str.str_view())!!;
-  
-  free(str);
-  file.close()!!;
-}
-
 struct GameUI {
   Font font;
   Texture2D *atlas_ptr;
@@ -92,22 +72,6 @@ fn void GameUI.add_fruit(&self, uint level) {
   self.fruit_table[6] = level;
 }
 
-fn void GameUI.draw_ready_player(&self) {
-  // rl::draw_text_ex(self.font,
-  // 		   "Ready!",
-  // 		   { (Uint16)(gl::MAZE_WIDTH / 2 * gl::PIXEL_SCALED - 3 * CHAR_SIZE) + 10, 20 * gl::PIXEL_SCALED - 5 },
-  // 		   DRAW_FONT_SIZE, 0.f,
-  // 		   (Color){255, 255, 0, 255}
-  // );
-
-  // rl::draw_text_ex(self.font,
-  // 		   "Player One!",
-  // 		   { (Uint16)(gl::MAZE_WIDTH / 2 * gl::PIXEL_SCALED - 5 * CHAR_SIZE - 22) + 10, 14 * gl::PIXEL_SCALED - 5 },
-  // 		   DRAW_FONT_SIZE, 0.f,
-  // 		   (Color){0, 255, 255, 255}
-  // );
-}
-
 fn void GameUI.draw_ui(&self, Uint8 pacman_lives, bool draw_fruits = true) {  
   ZString str = (ZString)mem::new_array(char, 12);
   Uint16 padding;
@@ -119,14 +83,14 @@ fn void GameUI.draw_ui(&self, Uint8 pacman_lives, bool draw_fruits = true) {
   
   padding = (Uint16)str.char_len() - 1;
   Uint16[<2>] high_score_pos = {
-    (Uint16)(15 * gl::PIXEL_SCALED + 3 * gl::PIXEL_SCALED / 5 - padding * gl::PIXEL_SCALED + padding * (gl::SCALE + 3)),
+    (Uint16)(15 * gl::TILE_SCALED + 3 * gl::TILE_SCALED / 5 - padding * gl::TILE_SCALED + padding * (gl::SCALE + 3)),
     gl::TEXT_SIZE
   };
 
   rl::draw_text_ex(self.font,
 		   "High Score",
 		   {
-		     10 * gl::PIXEL_SCALED,
+		     10 * gl::TILE_SCALED,
 		     0
 		   },
 		   gl::TEXT_SIZE,
@@ -139,7 +103,7 @@ fn void GameUI.draw_ui(&self, Uint8 pacman_lives, bool draw_fruits = true) {
   // Player score
   padding = (Uint16)str.char_len() - 1;
   Uint16[<2>] player_score_pos = {
-    (Uint16)(6 * gl::PIXEL_SCALED + gl::PIXEL_SCALED / 3 - padding * gl::PIXEL_SCALED + padding * (gl::SCALE + 3)),
+    (Uint16)(6 * gl::TILE_SCALED + gl::TILE_SCALED / 3 - padding * gl::TILE_SCALED + padding * (gl::SCALE + 3)),
     gl::TEXT_SIZE
   };
 
@@ -147,7 +111,7 @@ fn void GameUI.draw_ui(&self, Uint8 pacman_lives, bool draw_fruits = true) {
   rl::draw_text_ex(self.font,
 		   "1UP",
 		   {
-		     4 * gl::PIXEL_SCALED,
+		     4 * gl::TILE_SCALED,
 		     0
 		   },
 		   gl::TEXT_SIZE,
@@ -171,7 +135,7 @@ fn void GameUI.draw_ui(&self, Uint8 pacman_lives, bool draw_fruits = true) {
 			  
 			 { /*destination*/
 			   (float)(2 * gl::TEXT_SIZE + 2 * i * gl::TEXT_SIZE),
-			   (gl::MAZE_HEIGHT + gl::TOP_UI_SIZE) * gl::PIXEL_SCALED,
+			   (gl::MAZE_HEIGHT + gl::TOP_UI_SIZE) * gl::TILE_SCALED,
 			   gl::SPRITE_SIZE_SCALED,
 			   gl::SPRITE_SIZE_SCALED,
 			 },
@@ -234,8 +198,8 @@ fn void GameUI.draw_ui(&self, Uint8 pacman_lives, bool draw_fruits = true) {
     }
 
     Rectangle dest = {
-      (float)(gl::MAZE_WIDTH * gl::PIXEL_SCALED - (2 * gl::TEXT_SIZE + 2 * idx * gl::TEXT_SIZE) - gl::TEXT_SIZE),
-      (gl::MAZE_HEIGHT + gl::TOP_UI_SIZE) * gl::PIXEL_SCALED,
+      (float)(gl::MAZE_WIDTH * gl::TILE_SCALED - (2 * gl::TEXT_SIZE + 2 * idx * gl::TEXT_SIZE) - gl::TEXT_SIZE),
+      (gl::MAZE_HEIGHT + gl::TOP_UI_SIZE) * gl::TILE_SCALED,
       gl::SPRITE_SIZE_SCALED,
       gl::SPRITE_SIZE_SCALED,
     };
@@ -247,4 +211,24 @@ fn void GameUI.draw_ui(&self, Uint8 pacman_lives, bool draw_fruits = true) {
 fn void GameUI.free(&self) {
   ui::save_high_score(self.high_score);
   rl::unload_font(self.font);
+}
+
+<*
+ @param [&out] high_score : "High Score passed as null!"
+*>
+fn void load_high_score(uint *high_score) @inline @private {
+  String temp = hack::HIGHEST_SCORE;
+  *high_score = temp.to_uint()!!;
+}
+
+fn void save_high_score(uint high_score) {
+  File file;
+  ZString str = (ZString)mem::new_array(char, 12);
+  libc::sprintf(str, "%d", high_score);
+  
+  file = file::open("assets/high_score.bin", "wb")!!;
+  file.write(str.str_view())!!;
+  
+  free(str);
+  file.close()!!;
 }

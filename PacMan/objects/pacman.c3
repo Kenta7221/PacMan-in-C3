@@ -40,8 +40,8 @@ fn void PacMan.init(&self, Texture2D *atlas_ptr) {
 
 fn void PacMan.set_at_start_pos(&self) {
   const Int16[<2>] BASE_POS = {
-    13 * gl::PIXEL_SCALED + (gl::PIXEL_SCALED / 2),
-    26 * gl::PIXEL_SCALED
+    13 * gl::TILE_SCALED + (gl::TILE_SCALED / 2),
+    26 * gl::TILE_SCALED
   };
 
   self.pos = BASE_POS;
@@ -62,13 +62,13 @@ fn void PacMan.move(&self, Tile *tiles) {
       if(gl::is_aligned(self.pos) || self.lerp_amount >= 1.f) self.lerp_amount = 0.0f;
       self.lerp_amount += 0.14f;
 
-      self.pos = gl::tween_pos(self.pos, self.dirs & CURR_DIR_MASK, self.lerp_amount);
+      self.pos = gl::tween_pos_by_dir(self.pos, self.dirs & CURR_DIR_MASK, self.lerp_amount);
     }
   }
   
   if((self.dirs & CURR_DIR_MASK) == Direction.NONE) self.lerp_amount = 0.5f;
   
-  if(gl::in_tunnel((Int8[<2>])(self.pos / gl::PIXEL_SCALED))) {
+  if(gl::in_tunnel((Int8[<2>])(self.pos / gl::TILE_SCALED))) {
     gl::handle_tunnel_wrap(&self.pos);
     return;
   }
@@ -148,8 +148,8 @@ fn bool is_early_turn(Tile *tiles, Int16[<2>] pos, Uint8 curr, Uint8 desired) @p
   
   if(curr == desired) return false;
 
-  Uint8 tile_x =  (Uint8)(pos.x / gl::PIXEL_SCALED);
-  Uint8 tile_y = (Uint8)((pos.y / gl::PIXEL_SCALED) - gl::TOP_UI_SIZE);
+  Uint8 tile_x =  (Uint8)(pos.x / gl::TILE_SCALED);
+  Uint8 tile_y = (Uint8)((pos.y / gl::TILE_SCALED) - gl::TOP_UI_SIZE);
   
   for(Uint8 i = 0; i < BASE_SPEED; i++) {
     Uint8 tx = tile_x;

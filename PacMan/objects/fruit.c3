@@ -20,8 +20,8 @@ fn void? Fruit.init(&self, uint level) {
   const String SPRITESHEET_DIR = "assets/textures/fruits.png";
 
   self.pos = {
-    13 * gl::PIXEL_SCALED + (gl::PIXEL_SCALED / 2) - gl::SPRITE_SIZE_SCALED / 4,
-    20 * gl::PIXEL_SCALED - gl::SPRITE_SIZE_SCALED / 4
+    13 * gl::TILE_SCALED + (gl::TILE_SCALED / 2) - gl::SPRITE_SIZE_SCALED / 4,
+    20 * gl::TILE_SCALED - gl::SPRITE_SIZE_SCALED / 4
   };
   
   self.texture = rl::load_texture(SPRITESHEET_DIR);
@@ -100,9 +100,9 @@ fn void Fruit.reset(&self) @inline {
 
 fn bool Fruit.collision(&self, Int16[<2>] pacman_pos) {
   return
-  (13 * gl::PIXEL_SCALED == pacman_pos.x  ||
-   14 * gl::PIXEL_SCALED == pacman_pos.x) &&
-   20 * gl::PIXEL_SCALED == pacman_pos.y;
+  (13 * gl::TILE_SCALED == pacman_pos.x  ||
+   14 * gl::TILE_SCALED == pacman_pos.x) &&
+   20 * gl::TILE_SCALED == pacman_pos.y;
 }
 
 fn void Fruit.draw(&self) {

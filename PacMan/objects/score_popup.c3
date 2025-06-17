@@ -67,20 +67,21 @@ fn void? ScorePopup.init(&self, EventType event, Uint16[<2>] pos, Uint8 ghost_ea
   self.total_time = 0.f;
   
   Uint16 points;
+
+  io::printn(ghost_eaten);
   
   if(event == EventType.GHOST_EATEN) {
-    points = ghost_eaten * (200 + 200 * ghost_eaten);
+    points = 100 * 1 << ghost_eaten;
     libc::sprintf(self.str, "%d", points);
-    self.pos = (pos / gl::PIXEL_SCALED) * gl::PIXEL_SCALED;
+    self.pos = (pos / gl::TILE_SCALED) * gl::TILE_SCALED;
     self.color = {0, 255, 255, 255};
     return;
   }
   
   points = fruit_points;
   libc::sprintf(self.str, "%d", points);
-  self.pos = { 13 * gl::PIXEL_SCALED + (gl::PIXEL_SCALED / 2), 20 * gl::PIXEL_SCALED};  
-  self.color = {255, 200, 255, 255};
-
+  self.pos = { 13 * gl::TILE_SCALED + (gl::TILE_SCALED / 2), 20 * gl::TILE_SCALED};  
+  self.color = { 255, 200, 255, 255 };
 }
 
 <*
@@ -93,16 +94,16 @@ fn void ScorePopup.update(&self, EventType event, Uint16[<2>] pos, Uint8 ghost_e
   Uint16 points;
     
   if(event == EventType.GHOST_EATEN) {
-    points = ghost_eaten * (200 + 200 * ghost_eaten);
+    points = 100 * 1 << ghost_eaten;
     libc::sprintf(self.str, "%d", points);
-    self.pos = (pos / gl::PIXEL_SCALED) * gl::PIXEL_SCALED;
-    self.color = {0, 255, 255, 255};
+    self.pos = (pos / gl::TILE_SCALED) * gl::TILE_SCALED;
+    self.color = { 0, 255, 255, 255 };
     return;
   }
   
   points = fruit_points;
   libc::sprintf(self.str, "%d", points);
-  self.pos = { 13 * gl::PIXEL_SCALED + (gl::PIXEL_SCALED / 2), 20 * gl::PIXEL_SCALED};  
+  self.pos = { 13 * gl::TILE_SCALED + (gl::TILE_SCALED / 2), 20 * gl::TILE_SCALED};  
   self.color = {255, 200, 255, 255};
 }
 

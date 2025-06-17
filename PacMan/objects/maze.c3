@@ -60,8 +60,8 @@ fn EventType Maze.update(&self, PacMan *pacman) {
   if(pacman.can_turn_180) return NONE;
 
   Uint8[<2>] tile = {
-    (Uint8)(pacman.pos.x / gl::PIXEL_SCALED),
-    (Uint8)((pacman.pos.y / gl::PIXEL_SCALED) - gl::TOP_UI_SIZE),
+    (Uint8)(pacman.pos.x / gl::TILE_SCALED),
+    (Uint8)((pacman.pos.y / gl::TILE_SCALED) - gl::TOP_UI_SIZE),
   };
 
   Tile* curr_tile = &self.tiles[tile.x + tile.y * gl::MAZE_WIDTH];
@@ -93,15 +93,15 @@ fn void Maze.draw(&self, TimeSpan dt, bool finished_level = false, bool flash = 
     Rectangle src = {
       (float)self.tiles[i].uv.x,
       (float)self.tiles[i].uv.y,
-      gl::PIXEL_SIZE,
-      gl::PIXEL_SIZE
+      gl::TILE_SIZE,
+      gl::TILE_SIZE
     };
 
     Rectangle dest = {
-      (float)(self.tiles[i].pos.x * gl::PIXEL_SCALED),
-      (float)(self.tiles[i].pos.y * gl::PIXEL_SCALED),
-      gl::PIXEL_SCALED,
-      gl::PIXEL_SCALED
+      (float)(self.tiles[i].pos.x * gl::TILE_SCALED),
+      (float)(self.tiles[i].pos.y * gl::TILE_SCALED),
+      gl::TILE_SCALED,
+      gl::TILE_SCALED
     };
             
     rl::draw_texture_pro(self.texture, src, dest, (float[<2>]){0, 0}, 0, (Color){255, 255, 255, 255});
@@ -125,8 +125,8 @@ fn void Maze.free(&self) {
 
 fn maze::Tile get_tile_at(Tile *tiles, Int16[<2>] pos) {
   int[<2>] tile = {
-     pos.x / gl::PIXEL_SCALED,
-    (pos.y / gl::PIXEL_SCALED) - gl::TOP_UI_SIZE,
+     pos.x / gl::TILE_SCALED,
+    (pos.y / gl::TILE_SCALED) - gl::TOP_UI_SIZE,
   };
     
   return tiles[tile.x + tile.y * gl::MAZE_WIDTH];
@@ -157,8 +157,8 @@ fn void create_tilemap(Tile* tiles) @private {
     pos.y = (Uint8)(  ((i / 2) / gl::MAZE_WIDTH) + gl::TOP_UI_SIZE);
         
     Uint8[<2>] uv;
-    uv.x = (Uint8)(( (num - 1) % 16) * gl::PIXEL_SIZE + ( (num - 1) % 16) * gl::PADDING + gl::PADDING);
-    uv.y = (Uint8)(( (num - 1) / 16) * gl::PIXEL_SIZE + ( (num - 1) / 16) * gl::PADDING + gl::PADDING);
+    uv.x = (Uint8)(( (num - 1) % 16) * gl::TILE_SIZE + ( (num - 1) % 16) * gl::PADDING + gl::PADDING);
+    uv.y = (Uint8)(( (num - 1) / 16) * gl::TILE_SIZE + ( (num - 1) / 16) * gl::PADDING + gl::PADDING);
     
     tiles[i / 2].uv = uv;
     tiles[i / 2].pos = pos;
@@ -166,8 +166,8 @@ fn void create_tilemap(Tile* tiles) @private {
 }
 
 fn void update_tile_to_blank(Tile* tile) @private @inline {
-  tile.uv.x = (Uint8)(( (45 - 1) % 16) * gl::PIXEL_SIZE + ( (45 - 1) % 16) * gl::PADDING + gl::PADDING);
-  tile.uv.y = (Uint8)(( (45 - 1) / 16) * gl::PIXEL_SIZE + ( (45 - 1) / 16) * gl::PADDING + gl::PADDING);
+  tile.uv.x = (Uint8)(( (45 - 1) % 16) * gl::TILE_SIZE + ( (45 - 1) % 16) * gl::PADDING + gl::PADDING);
+  tile.uv.y = (Uint8)(( (45 - 1) / 16) * gl::TILE_SIZE + ( (45 - 1) / 16) * gl::PADDING + gl::PADDING);
   tile.type = BLANK;
 }
 

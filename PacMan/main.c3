@@ -4,8 +4,8 @@ import gl;
 import rl;
 import game_ctx;
 
-const WIDTH  = gl::SCALE * gl::PIXEL_SIZE * gl::MAZE_WIDTH;
-const HEIGHT = gl::SCALE * gl::PIXEL_SIZE * (gl::MAZE_HEIGHT + gl::TOP_UI_SIZE + gl::BOTTOM_UI_SIZE);
+const WIDTH  = gl::SCALE * gl::TILE_SIZE * gl::MAZE_WIDTH;
+const HEIGHT = gl::SCALE * gl::TILE_SIZE * (gl::MAZE_HEIGHT + gl::TOP_UI_SIZE + gl::BOTTOM_UI_SIZE);
 
 fn void main() {
   rl::init_window(WIDTH, HEIGHT, "PacMan with C3");
@@ -20,7 +20,7 @@ fn void main() {
   while(!rl::window_should_close() && !end_game) {
     ctx.timer.update();
     
-    ctx.advance_game_state(&state, &pause, &end_game);
+    ctx.update(&state, &pause, &end_game);
     
     rl::begin_drawing();
     rl::clear_background((Color){0, 0, 0, 255});
