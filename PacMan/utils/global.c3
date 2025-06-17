@@ -45,6 +45,16 @@ enum Direction : Uint8 (inline Uint8 type){
   RIGHT		= 0x01 << 3,
 }
 
+fn Int16[<2>] tween_by_tiles(Int16[<2>] s, Int16[<2>] e, float t) {
+  if(t > 1.f) t = 1.f;
+  if(t < 0.f) t = 0.f;
+
+  return {
+    (Int16)(s.x + (float)(e.x - s.x) * t),
+    (Int16)(s.y + (float)(e.y - s.y) * t)
+  };
+}
+
 fn Int16[<2>] tween_pos(Int16[<2>] pos, Uint8 dir, float t) {
   Int16[<2>] next_tile = pos / gl::PIXEL_SCALED;
   Int16[<2>] prev_tile = pos / gl::PIXEL_SCALED;
@@ -112,7 +122,8 @@ fn Int16[<2>] get_tile_offset(Int16[<2>] pos, Uint8 dir) {
   return pos;
 }
 
-fn bool is_aligned(Int16[<2>] pos) @inline {
+fn bool is_aligned(Int16[<2>] pos
+) @inline {
   return pos.x % gl::PIXEL_SCALED == 0 &&
          pos.y % gl::PIXEL_SCALED == 0;
 }

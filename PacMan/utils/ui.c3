@@ -54,7 +54,6 @@ fn void? GameUI.init(&self, Texture2D *atlas) {
   } 
 
   load_high_score(&self.high_score);
-  self.high_score = 0;
   self.score = 0;
 
   self.fruit_display_index = 0;

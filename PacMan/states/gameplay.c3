@@ -244,6 +244,8 @@ fn void Gameplay.game_loop(&self) {
   }
 
   foreach(idx, &ghost : self.ghosts) {
+    //if(idx == GhostType.INKY) print_ghost_stat(ghost);
+    
     if(dot_eaten && idx != GhostType.BLINKY) ghost::increase_counter((Uint8)idx, &ghost.dot_counter, self.timer.level);
     
     if(ghost::spawn_handler((Uint8)idx, ghost, self, dot_eaten)) continue;
@@ -267,8 +269,8 @@ fn void Gameplay.game_loop(&self) {
 	continue;
       }
 
-      self.flags |= GameplayState.PACMAN_DIED;
-      self.flags |= GameplayState.RESET_LEVEL;
+      // self.flags |= GameplayState.PACMAN_DIED;
+      // self.flags |= GameplayState.RESET_LEVEL;
       return;
     }
   }  
@@ -367,6 +369,19 @@ fn void Gameplay.free(&self) {
 //============================================================================================
 // Helper functions
 //============================================================================================
+
+<*
+ @param [&in] ghost : "Ghost was passed as null!"
+*>
+fn void print_ghost_stat(Ghost *ghost) {
+  io::printfn("\nFrighten mode %d", ghost.state_flags & GhostState.DEAD);
+  io::printfn("Leaving spawn %d", ghost.state_flags & GhostState.LEAVING_SPAWN);
+  io::printfn("In spawn %d", ghost.state_flags & GhostState.IN_SPAWN);
+  io::printfn("Dot counter: %d", ghost.dot_counter);
+  io::print("Pos: ");
+  io::printn(ghost.pos);
+  io::printn("");
+}
 
 <*
  @param [inout] fruit : "Fruit was passed as null!"
