@@ -1,6 +1,7 @@
 module game_ctx;
 
 import std::io;
+import std::time;
 import gl;
 import rl;
 
@@ -13,30 +14,25 @@ enum GameState {
 }
 
 struct GameContext {
-  Texture2D entity_atlas; // Pacman, ghosts and fruits
-  Timer timer;
-
+  Clock clock;
+  TimeSpan dt;
+  TimeSpan accumulator;
+  TimeSpan curr_time;
+  
   TitleScreen *title_screen;
   Gameplay *gameplay;
   DeathScreen *death_screen;
 }
 
 fn void? GameContext.init(&self) {
-  const String ATLAS_FILENAME = "assets/textures/entity.png";
-  
-  self.entity_atlas = rl::load_texture(ATLAS_FILENAME);
-  if(!rl::is_texture_valid(self.entity_atlas)) {
-    io::printn("Entity texture was not loaded!");
-    return io::FILE_NOT_FOUND?;
-  }
-
-  self.timer.init();
+  self.clock.mark();
+  self.dt = 0.01f;
+  self.accumulator = 0.0f;
+  self.curr_time = (TimeSpan)self.clock.to_now().to_sec();
   
   self.title_screen = mem::new(TitleScreen);
-  self.title_screen.init(&self.entity_atlas, &self.timer)!!;
-  
+  self.title_screen.init()!!;
   self.gameplay = null;
-
   self.death_screen = null;
 }
 
@@ -46,17 +42,17 @@ fn void? GameContext.init(&self) {
 fn void GameContext.change_state(&self, GameState *state) {
   if(*state == TITLE_SCREEN) {
     self.title_screen = mem::new(TitleScreen);
-    self.title_screen.init(&self.entity_atlas, &self.timer)!!;
+    self.title_screen.init()!!;
 
-    self.gameplay.free();
-    free(self.gameplay);
-    self.gameplay = null;    
+    self.death_screen.free();
+    free(self.death_screen);
+    self.death_screen = null;
     return;
   }
 
   if(*state == GAMEPLAY) {
     self.gameplay = mem::new(Gameplay);
-    self.gameplay.init(&self.entity_atlas, &self.timer)!!;
+    self.gameplay.init()!!;
 
     self.title_screen.free();
     free(self.title_screen);
@@ -66,7 +62,7 @@ fn void GameContext.change_state(&self, GameState *state) {
 
   if(*state == DEATH_SCREEN) {
     self.death_screen = mem::new(DeathScreen);
-    self.death_screen.init(&self.timer)!!;
+    self.death_screen.init()!!;
 
     self.gameplay.free();
     free(self.gameplay);
@@ -77,37 +73,44 @@ fn void GameContext.change_state(&self, GameState *state) {
 
 <*
  @param [&inout] state : "Game state was passed as null!"
- @param [&inout] pause : "Pause was passed as null!"
  @param [&out] end_game : "End game was passed as null!"
 *>
-fn void GameContext.update(&self, GameState *state, TimeSpan *pause, bool *end_game) {
+fn void GameContext.update(&self, GameState *state, bool *end_game) {
   GameState prev_state = *state;
 
-  defer if(*state != prev_state) self.change_state(state);
+  TimeSpan new_time = (TimeSpan)self.clock.to_now().to_sec();
+  TimeSpan frame_time = new_time - self.curr_time;
+  self.curr_time = new_time;
   
-  if(*state == TITLE_SCREEN) {
-    self.title_screen.update(state);
-    return;
-  }
-  
-  if(*state == GAMEPLAY) {
-    self.gameplay.update(state, pause);
-    return;
-  }
-  
-  if(*state == DEATH_SCREEN) {
-    self.death_screen.update(state);
+  self.accumulator += frame_time;
+
+  while(self.accumulator >= self.dt) {
+    bool update_game_loop = false;
+    
+    if(*state == TITLE_SCREEN) { self.title_screen.update(state, self.dt); }
+    else if(*state == GAMEPLAY) {
+      self.gameplay.update_state(state, &update_game_loop, self.dt);
+      if(update_game_loop) self.gameplay.game_loop(new_time, self.dt);
+    }
+    else { self.death_screen.update(state, self.dt); }
+
+    if(*state != prev_state) {
+      self.change_state(state);
+      prev_state = *state;
+    }
+    
+    self.accumulator -= self.dt;
   }
 }
 
-fn void GameContext.draw(&self, GameState state, TimeSpan pause) {
+fn void GameContext.draw(&self, GameState state) {
   if(state == TITLE_SCREEN) {
-    self.title_screen.draw(self.timer.dt);
+    self.title_screen.draw();
     return;
   }
   
   if(state == GAMEPLAY) {
-    self.gameplay.draw(pause);
+    self.gameplay.draw();
     return;
   }
 
@@ -117,8 +120,6 @@ fn void GameContext.draw(&self, GameState state, TimeSpan pause) {
 }
 
 fn void GameContext.free(&self) {
-  rl::unload_texture(self.entity_atlas);
-  
   if(self.title_screen != null) self.title_screen.free();
   if(self.gameplay     != null) self.gameplay.free();
   if(self.death_screen != null) self.death_screen.free();

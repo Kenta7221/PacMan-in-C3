@@ -22,28 +22,21 @@ enum GameplayState : Uint8 (inline Uint8 state) {
   CHASE_MODE          = 1 << 3,
   FRIGHTEN_MODE       = 1 << 4,
   USE_GLOBAL_COUNTER  = 1 << 5,
-  PACMAN_DIED         = 1 << 6,
-  GHOST_EATEN         = 1 << 7
+  GHOST_EATEN         = 1 << 6
 }
 
 struct Gameplay {
-  // Bit layout:
-  // Bit 0 - Start level
-  // Bit 1 - Reset level
-  // Bit 2 - Next level
-  // Bit 3 - chase mode, if 0 scatter mode
-  // Bit 4 - frighten mode
-  // Bit 5 - use global dot counter;
-  // Bit 6 - pacman died
-  // Bit 7 - ghost eaten
+  Texture2D ghost_atlas;
+  
   Uint8 flags;
   
   Uint8 eaten_dots;
   Uint8 eaten_ghosts;
   Uint8 global_ghosts_dot_counter;
   Uint16 rng_index; // Decides the direction of frighten ghost
-  
-  Timer *timer;
+  TimeSpan pause; // For pausing the game when pacman dies etc.
+
+  Timer timer;
   GameUI ui;
     
   Maze maze;
@@ -53,26 +46,31 @@ struct Gameplay {
   ScorePopup *score_popup;
 }
 
-<*
- @param [&in] entity_atlas : "Entity atlas passed as null!"
- @param [&in] entity_atlas : "Timer passed as null!"
-*>
-fn void? Gameplay.init(&self, Texture2D *entity_atlas, Timer *timer) {  
+fn void? Gameplay.init(&self) {
+  const String GHOST_ATLAS_DIR = "assets/textures/ghosts.png";
+  
+  self.ghost_atlas = rl::load_texture(GHOST_ATLAS_DIR);
+  if(!rl::is_texture_valid(self.ghost_atlas)) {
+    io::printn("Ghost atlas has not been loaded!");
+    return io::FILE_NOT_FOUND?;
+  }
+
   self.flags |= GameplayState.START_LEVEL;
   self.eaten_dots = 0;
   self.eaten_ghosts = 0;
   self.global_ghosts_dot_counter = 0;
   self.rng_index = 0;
+  self.pause = 0.f;
 
-  self.timer = timer;
-  self.ui.init(entity_atlas)!;
+  self.timer.init();
+  self.ui.init()!;
     
-  self.pacman.init(entity_atlas);
+  self.pacman.init()!;
 
-  self.ghosts[0].init(GhostType.BLINKY, entity_atlas);
-  self.ghosts[1].init(GhostType.PINKY , entity_atlas);
-  self.ghosts[2].init(GhostType.INKY  , entity_atlas);
-  self.ghosts[3].init(GhostType.CLYDE , entity_atlas);
+  self.ghosts[0].init(GhostType.BLINKY, &self.ghost_atlas);
+  self.ghosts[1].init(GhostType.PINKY , &self.ghost_atlas);
+  self.ghosts[2].init(GhostType.INKY  , &self.ghost_atlas);
+  self.ghosts[3].init(GhostType.CLYDE , &self.ghost_atlas);
 
   self.fruit = null;
   self.score_popup = null;
@@ -86,6 +84,7 @@ fn void Gameplay.reset_level(&self) {
   self.eaten_ghosts = 0;
   self.global_ghosts_dot_counter = 0;
   self.rng_index = 0;
+  self.pause = 0.f;
 
   self.timer.reset();
   
@@ -96,10 +95,10 @@ fn void Gameplay.reset_level(&self) {
     self.fruit = null;
   }
   
-  self.ghosts[0].set_at_start_pos(GhostType.BLINKY);
-  self.ghosts[1].set_at_start_pos(GhostType.PINKY );
-  self.ghosts[2].set_at_start_pos(GhostType.INKY  );
-  self.ghosts[3].set_at_start_pos(GhostType.CLYDE );
+  self.ghosts[0].set_at_start_pos();
+  self.ghosts[1].set_at_start_pos();
+  self.ghosts[2].set_at_start_pos();
+  self.ghosts[3].set_at_start_pos();
   
   self.pacman.set_at_start_pos();
 
@@ -110,86 +109,105 @@ fn void Gameplay.reset_level(&self) {
  Updates everythink based on set flags. Handles all the pauses between start of the level,
  eating a ghost, death of pacman etc.
  @param [&out]   state : "Game state was passed as null!"
- @param [&inout] pause : "Pause was passed as null!"
+ @param [&out]   enter_game_loop : "Enter game loop was passed as null!"
 *>
-fn void Gameplay.update(&self, GameState *state, TimeSpan *pause) {
+fn void Gameplay.update_state(&self, GameState *state, bool *enter_game_loop, TimeSpan dt) {
   if(self.flags & GameplayState.START_LEVEL) {
-    if(*pause < 2.f) {
-      *pause += self.timer.dt;
+    if(self.pause < 2.f) {
+      self.pause += dt;
+      *enter_game_loop = false;
       return;
     }
 
     self.flags ^= GameplayState.START_LEVEL;
-    *pause = 0.0f;
+    self.pause = 0.0f;
+    *enter_game_loop = false;
     return;
   }
 
   if(self.flags & GameplayState.GHOST_EATEN) {
-    if(*pause < 1.f) {
-      *pause += self.timer.dt;
+    if(self.pause < 1.f) {
+      self.pause += dt;
+      *enter_game_loop = false;
       return;
     }
 
-    *pause = 0.0f;
+    self.pause = 0.0f;
     self.flags ^= GameplayState.GHOST_EATEN;
+    *enter_game_loop = false;
     return;
   }
 
   if(self.flags & GameplayState.RESET_LEVEL) {
-    if(*pause > 1.f && self.flags & GameplayState.PACMAN_DIED) {
-      self.pacman.animation.update_everything(0, 11, 0.2); // Death animation
-      self.flags ^= GameplayState.PACMAN_DIED;
+    if(self.pause < 1.f) {
+      self.pause += dt;
+      *enter_game_loop = false;
       return;
     }
+
+    if(self.pause < 3.f) {
+      if(self.pacman.animation.switch_time != 0.18f) {
+	self.pacman.animation.update_swtich_time(0.18f);
+      }
       
-    if(*pause < 3.f) {
-      *pause += self.timer.dt;
+      self.pacman.update(self.timer.level, &self.maze.tiles, dt);
+      self.pause += dt;
+      *enter_game_loop = false;
       return;
     }
 
-    self.pacman.animation.update_everything(0, 3, 0.06f); // Normal animation
-
-    *pause = 0.0f;
+    self.pause = 0.0f;
 
     self.flags ^= GameplayState.RESET_LEVEL;
     self.flags |= GameplayState.USE_GLOBAL_COUNTER;
+
     self.pacman.lives--;
+    self.pacman.state_flags ^= PacManState.DEAD;
+    self.pacman.animation.update_swtich_time(0.08f);
 
     if(self.pacman.lives == 0) {
       ui::save_high_score(self.ui.high_score);      
       *state = DEATH_SCREEN;
+      *enter_game_loop = false;
       return;
     }
       
     self.reset_level();
+    *enter_game_loop = false;
     return;
   }
 
   if(self.flags & GameplayState.NEXT_LEVEL) {
-    if(*pause < 3.f) {
-      *pause += self.timer.dt;
+    if(self.pause < 3.f) {
+      self.pause += dt;
+      *enter_game_loop = false;
       return;
     }
 
-    *pause = 0.f;
+    self.pause = 0.f;
     
     self.timer.level++;
     self.ui.add_fruit(self.timer.level);
     self.flags ^= GameplayState.NEXT_LEVEL;
     self.reset_level();
+    *enter_game_loop = false;
     return;
   }
 
-  self.game_loop();
+  *enter_game_loop = true;
 }
 
-fn void Gameplay.game_loop(&self) {
+fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
+  self.timer.update(new_time);
+  
   if(self.eaten_dots >= 244) {
     self.flags |= GameplayState.NEXT_LEVEL;
     return;
   }
+
+  if(self.score_popup != null) self.score_popup.elapsed_time += dt;
   
-  if(self.timer.new_cycle() && !(self.flags & GameplayState.FRIGHTEN_MODE)) {
+  if(self.timer.new_cycle(dt) && !(self.flags & GameplayState.FRIGHTEN_MODE)) {
     self.flags ^= GameplayState.CHASE_MODE;
       
     self.timer.cycle = 0.f;
@@ -201,7 +219,7 @@ fn void Gameplay.game_loop(&self) {
       : io::printn("Scatter Mode");
   }
  
-  if(self.timer.end_frighten_mode((bool)(self.flags & GameplayState.FRIGHTEN_MODE))) {
+  if(self.timer.end_frighten_mode(dt, (bool)(self.flags & GameplayState.FRIGHTEN_MODE))) {
     self.flags ^= GameplayState.FRIGHTEN_MODE;
     self.timer.frighten_mode = 0.f;
     
@@ -212,7 +230,7 @@ fn void Gameplay.game_loop(&self) {
   }
 
   // 2. PacMan interaction
-  self.pacman.move(&self.maze.tiles);
+  self.pacman.update(self.timer.level, &self.maze.tiles, dt);
 
   bool dot_eaten = false;
   EventType e = self.maze.update(&self.pacman);
@@ -233,7 +251,7 @@ fn void Gameplay.game_loop(&self) {
     io::printn("Frighten Mode enabled");
   }
 
-  fruit_handler(&self.fruit, &self.score_popup, self);
+  fruit_handler(&self.fruit, &self.score_popup, self, dt);
 
   if(e == SCORE_INCREASE) {
     dot_eaten = true;
@@ -243,117 +261,117 @@ fn void Gameplay.game_loop(&self) {
     if(self.flags & GameplayState.USE_GLOBAL_COUNTER) { self.global_ghosts_dot_counter++; }
   }
 
-  foreach(idx, &ghost : self.ghosts) {
-    if(dot_eaten && idx != GhostType.BLINKY) ghost::increase_counter((Uint8)idx, &ghost.dot_counter, self.timer.level);
-    
-    if(ghost::spawn_handler((Uint8)idx, ghost, self, dot_eaten)) continue;
-    
-    Ghost *other_ghost = null;
-    if(idx == GhostType.INKY) { other_ghost = &self.ghosts[0]; }
-    else if(idx == GhostType.CLYDE) { other_ghost = &self.ghosts[3]; }
-
-    ghost.move(&self.maze.tiles, ghost.get_target(&self.pacman, other_ghost), self.flags, &self.rng_index);
+  // Checking this out of loop because only blinky can become elroy
+  if(ghost::activate_elroy(self.timer.level, self.eaten_dots)) {
+    self.ghosts[GhostType.BLINKY].state_flags |= GhostState.ELROY;
+  }
   
-    if(ghost.collision(self.pacman.pos)) {
-      if(ghost.state_flags & GhostState.FRIGHTEN) {
+  foreach(idx, &ghost : self.ghosts) {
+    bool collision = false;
+    
+    if(dot_eaten && idx != GhostType.BLINKY) ghost::increase_counter((Uint8)idx, &ghost.dot_counter, self.timer.level);
+
+    ghost.update(self, &collision, dot_eaten, dt);
+
+    if(collision) {
+      if(ghost.state_flags & GhostState.DEAD) {
+	self.flags |= GameplayState.GHOST_EATEN;
 	self.eaten_ghosts += 1;
 	score_popup::handler(&self.score_popup, ghost.pos, self.eaten_ghosts, 0, PopupState.INIT, EventType.GHOST_EATEN);
-
-	ghost.turn_180();
-	ghost.state_flags ^= GhostState.FRIGHTEN;
-	ghost.state_flags |= GhostState.DEAD;
-	
-	self.flags |= GameplayState.GHOST_EATEN;
 	continue;
       }
-
-      self.flags |= GameplayState.PACMAN_DIED;
+      
+      self.pacman.state_flags |= PacManState.DEAD;
       self.flags |= GameplayState.RESET_LEVEL;
       return;
-    }
-  }  
+    }    
+  }
 }
 
-fn void Gameplay.draw(&self, TimeSpan pause) {
+fn void Gameplay.draw(&self) {
   if(self.flags & GameplayState.START_LEVEL) {
-    self.maze.draw(dt: 0, finished_level: false);
+    self.maze.draw();
     
-    draw_ready_player_text(&self.ui.font, pause);
+    draw_ready_player_text(&self.ui.font, self.pause);
       
-    if(pause > 1.f) {
-      foreach(i, &ghost : self.ghosts) self.ghosts[i].draw(ghost::GhostType.values[i], dt: 0);
+    if(self.pause > 1.f) {
+      foreach(i, &ghost : self.ghosts) self.ghosts[i].draw();
     }
       
-    self.pacman.draw(dt: 0);
+    self.pacman.draw();
     return;
   }
 
   if(self.flags & GameplayState.GHOST_EATEN) {
-    self.maze.draw(dt: 0, finished_level: false);
+    self.maze.draw();
       
     if(self.fruit != null) self.fruit.draw();
 
-    foreach(i, &ghost : self.ghosts) self.ghosts[i].draw(ghost::GhostType.values[i], dt: 0);
-    self.pacman.draw(dt: 0);
-      
-    self.ui.draw_ui(self.pacman.lives);
+    foreach(i, &ghost : self.ghosts) self.ghosts[i].draw();
+    self.pacman.draw();
+
+    self.ui.draw(&self.pacman.texture, self.pacman.lives);
       
     if(self.score_popup == null) return;
-    self.score_popup.can_drawn(self.timer.dt)
+    self.score_popup.can_drawn()
       ? self.score_popup.draw()
       : score_popup::handler(&self.score_popup, {0, 0}, 0, 0, PopupState.DESTROY, EventType.NONE);
     return;
   }
 
   if(self.flags & GameplayState.RESET_LEVEL) { // aka PacMan died
-    self.maze.draw(dt: 0, finished_level: false);
+    self.maze.draw();
       
     if(self.fruit != null) self.fruit.draw();
 
-    if(pause < 1.f) {
-      foreach(i, &ghost : self.ghosts) self.ghosts[i].draw(ghost::GhostType.values[i], dt: 0);
-      self.pacman.draw(0, dead: false);
-    } else {
-      self.pacman.draw(self.timer.dt, dead: true);
+    if(self.pause < 1.f) {
+      foreach(i, &ghost : self.ghosts) self.ghosts[i].draw();
     }
-      
-    self.ui.draw_ui(self.pacman.lives);      
+    
+    self.pacman.draw();
+    self.ui.draw(&self.pacman.texture, self.pacman.lives);
     return;
   }
 
-  // TODO: Add flashing maze
   if(self.flags & GameplayState.NEXT_LEVEL) {
+    self.ui.draw(&self.pacman.texture, self.pacman.lives);
+    
+    if(self.pause < 1.f) {
+      self.maze.draw(finished_level: false, blinking_energizer: false);
+    } else {
+      self.maze.draw(finished_level: true, blinking_energizer: false);
+    }
+    
     if(self.fruit != null) self.fruit.draw();
     
-    if(pause < 1.f) {
-      self.maze.draw(dt: 0, finished_level: false);
-      foreach(i, &ghost : self.ghosts) self.ghosts[i].draw(ghost::GhostType.values[i], dt: 0);
-    } else {
-      self.maze.draw(self.timer.dt, finished_level: true);
+    if(self.pause < 1.1f) {
+      foreach(i, &ghost : self.ghosts) self.ghosts[i].draw();
     }
-
-    self.pacman.draw(dt: 0);
+    
+    self.pacman.draw();
     return;
   }
 
   // Game loop draw
-  self.maze.draw(self.timer.dt, finished_level: false, flash: true);
+  self.maze.draw(finished_level: false, blinking_energizer: true);
       
   if(self.fruit != null) self.fruit.draw();
       
-  foreach(i, &ghost : self.ghosts) self.ghosts[i].draw(ghost::GhostType.values[i], self.timer.dt);
+  foreach(i, &ghost : self.ghosts) self.ghosts[i].draw();
       
-  self.pacman.draw(self.timer.dt);
+  self.pacman.draw();
       
-  self.ui.draw_ui(self.pacman.lives);
+  self.ui.draw(&self.pacman.texture, self.pacman.lives);
       
   if(self.score_popup == null) return;
-  self.score_popup.can_drawn(self.timer.dt)
+  self.score_popup.can_drawn()
     ? self.score_popup.draw()
     : score_popup::handler(&self.score_popup, {0, 0}, 0, 0, PopupState.DESTROY, EventType.NONE);    
 }
 
 fn void Gameplay.free(&self) {
+  rl::unload_texture(self.ghost_atlas);
+  
   self.ui.free();
   self.maze.free();
 
@@ -386,7 +404,7 @@ fn void print_ghost_stat(Ghost *ghost) {
  @param [inout] score_popup : "Score Popup was passed as null!"
  @param [&in] ctx : "Game Context was passed as null!"
 *>
-fn void fruit_handler(Fruit **fruit, ScorePopup **score_popup, Gameplay *ctx) {
+fn void fruit_handler(Fruit **fruit, ScorePopup **score_popup, Gameplay *ctx, TimeSpan dt) {
   if((ctx.eaten_dots == 70 || ctx.eaten_dots == 170) && (*fruit) == null) {
     io::printn("Fruit appeared");
     *fruit = mem::new(Fruit);
@@ -394,7 +412,7 @@ fn void fruit_handler(Fruit **fruit, ScorePopup **score_popup, Gameplay *ctx) {
   }
   
   if((*fruit) != null) {
-    (*fruit).elapsed_time += ctx.timer.dt;
+    (*fruit).elapsed_time += dt;
 
     if((*fruit).elapsed_time > 9.5f) {
       io::printn("Fruit dissapeared");

@@ -15,17 +15,14 @@ fn void main() {
   GameContext ctx;
   ctx.init()!!;
 
-  TimeSpan pause = 0.0f; // Handles all the pauses in gameplay and end screen
   bool end_game = false;
   while(!rl::window_should_close() && !end_game) {
-    ctx.timer.update();
-    
-    ctx.update(&state, &pause, &end_game);
+    ctx.update(&state, &end_game);
     
     rl::begin_drawing();
     rl::clear_background((Color){0, 0, 0, 255});
     
-    ctx.draw(state, pause);
+    ctx.draw(state);
     
     rl::end_drawing();
   }

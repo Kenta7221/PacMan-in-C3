@@ -34,7 +34,6 @@ const SCALE = 4;
 - Collect all **244 dots** to advance to the next level
 - The game ends when **PacMan loses all his lives**
 ## Missing features
-- Blinky lacking the **'Elroy'** mechanic
 - Frighten ghost **blink** continuously instead of only when the timer is almost over
 - **No audio**
 ## License

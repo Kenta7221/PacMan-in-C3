@@ -10,19 +10,18 @@ import ui;
 import timer;
 
 struct TitleScreen {
-  Texture2D* entity_atlas; // Pacman, ghosts and fruits
-  Texture2D maze_atlas;    // Only for dots and pellets
-  Timer *timer;
+  Font font;
+  Texture2D maze_atlas; // Used only for dots and pellets
+  Texture2D ghost_atlas;
 
   GameUI ui;
-  
-  Font font;
   Ghost[4] ghosts;
 }
 
-fn void? TitleScreen.init(&self, Texture2D *entity_atlas, Timer *timer) {
-  const String MAZE_ATLAS_DIR = "assets/textures/maze-spritesheet.png";
-  const String FONT_DIR = "assets/fonts/emulogic.ttf";
+fn void? TitleScreen.init(&self) {
+  const String MAZE_ATLAS_DIR  = "assets/textures/maze-spritesheet.png";
+  const String GHOST_ATLAS_DIR = "assets/textures/ghosts.png";
+  const String FONT_DIR        = "assets/fonts/emulogic.ttf";
 
   const Int16    GHOST_DRAW_POS_X = 5 * gl::TILE_SCALED;
   const Int16[4] GHOST_DRAW_POS_Y = {
@@ -32,30 +31,30 @@ fn void? TitleScreen.init(&self, Texture2D *entity_atlas, Timer *timer) {
     17 * gl::TILE_SCALED, // Clyde
   };
 
-  self.entity_atlas = malloc(Texture2D.sizeof);
-  self.entity_atlas = entity_atlas;
-  
-  self.timer = timer;
-
-  self.maze_atlas = rl::load_texture(MAZE_ATLAS_DIR);
-  if(!rl::is_texture_valid(self.maze_atlas)) {
-    io::printn("Maze atlas has not been loaded!");
-    return io::FILE_NOT_FOUND?;
-  }
-  
   self.font = rl::load_font_ex(FONT_DIR, gl::FONT_BASE_SIZE, null, 0);
   if(!rl::is_font_valid(self.font)) {
     io::printn("Font has not been loaded!");
     return io::FILE_NOT_FOUND?;
   }
-
-  self.ui.init(entity_atlas)!;
   
-  self.ghosts[0].init(GhostType.BLINKY, entity_atlas);
-  self.ghosts[1].init(GhostType.PINKY , entity_atlas);
-  self.ghosts[2].init(GhostType.INKY  , entity_atlas);
-  self.ghosts[3].init(GhostType.CLYDE , entity_atlas);
+  self.maze_atlas = rl::load_texture(MAZE_ATLAS_DIR);
+  if(!rl::is_texture_valid(self.maze_atlas)) {
+    io::printn("Maze atlas has not been loaded!");
+    return io::FILE_NOT_FOUND?;
+  }
 
+  self.ghost_atlas = rl::load_texture(GHOST_ATLAS_DIR);
+  if(!rl::is_texture_valid(self.ghost_atlas)) {
+    io::printn("Ghost atlas has not been loaded!");
+    return io::FILE_NOT_FOUND?;
+  }
+
+  self.ui.init()!;
+
+  self.ghosts[0].init(GhostType.BLINKY, &self.ghost_atlas);
+  self.ghosts[1].init(GhostType.PINKY , &self.ghost_atlas);
+  self.ghosts[2].init(GhostType.INKY  , &self.ghost_atlas);
+  self.ghosts[3].init(GhostType.CLYDE , &self.ghost_atlas);
   
   foreach(idx, &ghost : self.ghosts) {
     ghost.dir = Direction.RIGHT;
@@ -66,17 +65,19 @@ fn void? TitleScreen.init(&self, Texture2D *entity_atlas, Timer *timer) {
 <*
  @param [&out] state : "Game state passed as null!"
 *>
-fn void TitleScreen.update(&self, GameState *state) {
+fn void TitleScreen.update(&self, GameState *state, TimeSpan dt) {
   if(rl::is_key_down(rl::KEY_SPACE)) {
     *state = GAMEPLAY;
   }
+
+  foreach(&ghost : self.ghosts) { ghost.update_animation(dt); }
 }
 
-fn void TitleScreen.draw(&self, TimeSpan dt) {
-  static TimeSpan total_time = 0.0f;
+fn void TitleScreen.draw(&self) {
+  static Uint8 blinks = 0;
   static bool flash = true;
 
-  total_time += dt;
+  blinks += 1;
   
   rl::draw_text_ex(self.font,
 		   "Character / Nickname",
@@ -89,19 +90,19 @@ fn void TitleScreen.draw(&self, TimeSpan dt) {
 		   (Color){255, 255, 255, 255}
   );
 
-  self.ui.draw_ui(pacman_lives: 0, draw_fruits: false);
+  self.ui.draw(pacman_texture: null, pacman_lives: 0, draw_lives_fruits: false);
   
-  draw_ghost_with_name(&self.ghosts[0], GhostType.BLINKY, &self.font, "-Shadow     Blinky", self.timer.dt);
-  draw_ghost_with_name(&self.ghosts[1], GhostType.PINKY , &self.font, "-Speedy     Pinky", self.timer.dt);
-  draw_ghost_with_name(&self.ghosts[2], GhostType.INKY  , &self.font, "-Bashful    Inky", self.timer.dt);
-  draw_ghost_with_name(&self.ghosts[3], GhostType.CLYDE , &self.font, "-Pokey      Clyde", self.timer.dt);
+  draw_ghost_with_name(&self.ghosts[0], GhostType.BLINKY, &self.font, "-Shadow     Blinky");
+  draw_ghost_with_name(&self.ghosts[1], GhostType.PINKY , &self.font, "-Speedy     Pinky" );
+  draw_ghost_with_name(&self.ghosts[2], GhostType.INKY  , &self.font, "-Bashful    Inky"  );
+  draw_ghost_with_name(&self.ghosts[3], GhostType.CLYDE , &self.font, "-Pokey      Clyde" );
 
   draw_maze_points(&self.maze_atlas, &self.font);
   
   rl::draw_text_ex(self.font,
-		   "2025 made by Kenta",
+		   "(C) 2025 made by Kenta",
 		   {
-		     (float)(self.ghosts[3].pos.x + gl::TEXT_SIZE + gl::TEXT_SIZE / 2),
+		     (float)(self.ghosts[3].pos.x + gl::TEXT_SIZE - gl::TEXT_SIZE),
 		     (float)(self.ghosts[3].pos.y + 8 * gl::SPRITE_SIZE_SCALED)
 		   },
 		   gl::TEXT_SIZE,
@@ -109,8 +110,8 @@ fn void TitleScreen.draw(&self, TimeSpan dt) {
 		   (Color){255, 185, 255, 255}
   );
 
-  if(total_time >= 0.8) {
-    total_time = 0.0f;
+  if(blinks >= 18) {
+    blinks = 0;
     flash = !flash;
   }
 
@@ -133,7 +134,7 @@ fn void TitleScreen.draw(&self, TimeSpan dt) {
  @param [&in] ghost : "Ghost passed as null!"
  @param [&in] font : "Font passed as null!"
 *>
-fn void draw_ghost_with_name(Ghost *ghost, Uint8 ghost_type, Font *font, ZString nicknames, TimeSpan dt) {
+fn void draw_ghost_with_name(Ghost *ghost, Uint8 ghost_type, Font *font, ZString nicknames) {
   const Color[4] FONT_COLOR = {
     {255,   0,   0, 255},
     {255, 185, 255, 255},
@@ -141,7 +142,7 @@ fn void draw_ghost_with_name(Ghost *ghost, Uint8 ghost_type, Font *font, ZString
     {255, 185,  81, 255}
   };
   
-  ghost.draw(ghost_type, dt);
+  ghost.draw();
 
   rl::draw_text_ex(*font,
 		   nicknames,
@@ -223,9 +224,7 @@ fn void draw_maze_points(Texture2D *maze_atlas, Font *font) {
 
 fn void TitleScreen.free(&self) {
   rl::unload_texture(self.maze_atlas);
-
-  self.entity_atlas = null;
-  self.timer = null;
+  rl::unload_texture(self.ghost_atlas);
 
   self.ui.free();
 

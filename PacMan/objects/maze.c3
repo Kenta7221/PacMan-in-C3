@@ -77,18 +77,18 @@ fn EventType Maze.update(&self, PacMan *pacman) {
   return SCORE_INCREASE;
 }
 
-fn void Maze.draw(&self, TimeSpan dt, bool finished_level = false, bool flash = false) {
-  static TimeSpan total_time = 0.0f;
+fn void Maze.draw(&self, bool finished_level = false, bool blinking_energizer = false) {
+  static Uint8 blinks = 0;
   static bool is_white = false;
   static bool blank_energizer = false;
 
-  if(finished_level || flash) { total_time += dt; }
-  else if(!finished_level && is_white) { is_white = false; }
+  if(finished_level || blinking_energizer) blinks++;
+  if(!finished_level && is_white) is_white = false;
   
   for(int i = 0; i < gl::MAZE_WIDTH * gl::MAZE_HEIGHT; i++) {
-    if(finished_level && total_time >= 0.32) change_tile_around(&self.tiles[i], is_white);
+    if(finished_level && blinks >= 20) change_tile_around(&self.tiles[i], is_white);
 
-    if(flash && blank_energizer && self.tiles[i].type == TileType.ENERGIZER) continue;
+    if(blinking_energizer && blank_energizer && self.tiles[i].type == TileType.ENERGIZER) continue;
     
     Rectangle src = {
       (float)self.tiles[i].uv.x,
@@ -106,12 +106,12 @@ fn void Maze.draw(&self, TimeSpan dt, bool finished_level = false, bool flash = 
             
     rl::draw_texture_pro(self.texture, src, dest, (float[<2>]){0, 0}, 0, (Color){255, 255, 255, 255});
   }
-  
-  if(total_time >= 0.32) {
+
+  if(blinks >= 20) {
     if(finished_level) is_white = !is_white;    
-    if(flash) blank_energizer = !blank_energizer;
+    if(blinking_energizer) blank_energizer = !blank_energizer;
     
-    total_time = 0.f;
+    blinks = 0;
   }
 }
 

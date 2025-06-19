@@ -17,19 +17,19 @@ struct Fruit {
 }
 
 fn void? Fruit.init(&self, uint level) {
-  const String SPRITESHEET_DIR = "assets/textures/fruits.png";
+  const String ATLAS_FILENAME = "assets/textures/fruits.png";
+  
+  self.texture = rl::load_texture(ATLAS_FILENAME);
+  if(!rl::is_texture_valid(self.texture)) {
+    io::printn("Fruit texture was not loaded!");
+    return io::FILE_NOT_FOUND?;
+  }
 
   self.pos = {
     13 * gl::TILE_SCALED + (gl::TILE_SCALED / 2) - gl::SPRITE_SIZE_SCALED / 4,
     20 * gl::TILE_SCALED - gl::SPRITE_SIZE_SCALED / 4
   };
   
-  self.texture = rl::load_texture(SPRITESHEET_DIR);
-  if(!rl::is_texture_valid(self.texture)) {
-    io::printn("Fruit texture was not loaded!");
-    return io::FILE_NOT_FOUND?;
-  }
-
   self.active = false;
   self.elapsed_time = 0.0f;
 

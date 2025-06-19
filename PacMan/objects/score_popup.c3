@@ -47,7 +47,7 @@ struct ScorePopup {
   ZString str;
   Color color;
   Uint16[<2>] pos;
-  TimeSpan total_time;
+  TimeSpan elapsed_time;
 }
 
 <*
@@ -64,11 +64,9 @@ fn void? ScorePopup.init(&self, EventType event, Uint16[<2>] pos, Uint8 ghost_ea
   }
 
   self.str = (ZString)mem::new_array(char, 12);;
-  self.total_time = 0.f;
+  self.elapsed_time = 0.f;
   
   Uint16 points;
-
-  io::printn(ghost_eaten);
   
   if(event == EventType.GHOST_EATEN) {
     points = 100 * 1 << ghost_eaten;
@@ -89,7 +87,7 @@ fn void? ScorePopup.init(&self, EventType event, Uint16[<2>] pos, Uint8 ghost_ea
  @require event == EventType.GHOST_EATEN || EventType.FRUIT_EATEN : "Passed wrong event type"
 *>
 fn void ScorePopup.update(&self, EventType event, Uint16[<2>] pos, Uint8 ghost_eaten, Uint16 fruit_points) {
-  self.total_time = 0.f;
+  self.elapsed_time = 0.f;
   
   Uint16 points;
     
@@ -107,9 +105,8 @@ fn void ScorePopup.update(&self, EventType event, Uint16[<2>] pos, Uint8 ghost_e
   self.color = {255, 200, 255, 255};
 }
 
-fn bool ScorePopup.can_drawn(&self, TimeSpan dt) @inline {
-  self.total_time += dt;
-  return self.total_time <= 2.f;
+fn bool ScorePopup.can_drawn(&self) @inline {
+  return self.elapsed_time <= 2.f;
 }
 
 fn void ScorePopup.draw(&self) {

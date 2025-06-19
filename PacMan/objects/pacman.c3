@@ -1,6 +1,7 @@
 module pacman;
 
 import std::io;
+import std::math;
 
 import gl;
 import rl;
@@ -10,9 +11,12 @@ import maze;
 const CURR_DIR_MASK @private = 0x0F;
 const TURN_DIR_MASK @private = 0xF0;
 
-const BASE_SPEED @private = 4;
+enum PacManState : Uint8 (inline Uint8 state) {
+  DEAD                 = 1 << 1,
+  TURN_180             = 1 << 0
+}
 
-struct PacMan {
+struct PacMan (AnimatorHandler) {
   Int16[<2>] pos;
   Uint8 lives;  
   TimeSpan lerp_amount;
@@ -21,19 +25,30 @@ struct PacMan {
   // Bit 4-7 - early turn
   // Bit 3-0 - curr dir
   Uint8 dirs;
+
+  // Bit 1 - Dead
+  // Bit 0 - Can turn 180
+  Uint8 state_flags;
   bool can_turn_180;
-  
+
+  Texture2D texture;
   Animator animation;
 }
 
-<*
- @param [&in] atlas_ptr : "Entity atlas was passed as null!"
-*>
-fn void PacMan.init(&self, Texture2D *atlas_ptr) {
+fn void? PacMan.init(&self) {
+  const String ATLAS_FILENAME = "assets/textures/pacman.png";
+
+  self.texture = rl::load_texture(ATLAS_FILENAME);
+  if(!rl::is_texture_valid(self.texture)) {
+    io::printn("PacMan texture was not loaded!");
+    return io::FILE_NOT_FOUND?;
+  }
+ 
   self.set_at_start_pos();
   self.lives = 3;
+  self.state_flags = 0;  
 
-  self.animation.init(atlas_ptr, 0, 3, 0.05f);
+  self.animation.init(&self.texture, 0, 12, 0.08f);
 
   self.lerp_amount = 0.0f;
 }
@@ -45,14 +60,18 @@ fn void PacMan.set_at_start_pos(&self) {
   };
 
   self.pos = BASE_POS;
+  self.state_flags = 0;
+  
   self.can_turn_180 = false;
   self.dirs = (Direction.NONE.type << 4) | (Direction.NONE.type);
+
+  self.update_animation(dt: 0);
 }
 
 <*
- @param [&in] tiles
+ @param [&in] tiles : "Tiles was passed as null"
 *>
-fn void PacMan.move(&self, Tile *tiles) {  
+fn void PacMan.move(&self, Tile *tiles, TimeSpan dt, float speed) {  
   Uint8 input_dir = Direction.NONE;
   Int16[<2>] next_pos;
   Tile next_tile;
@@ -60,7 +79,7 @@ fn void PacMan.move(&self, Tile *tiles) {
   defer {
     if(!self.can_turn_180) {
       if(gl::is_aligned(self.pos) || self.lerp_amount >= 1.f) self.lerp_amount = 0.0f;
-      self.lerp_amount += 0.14f;
+      self.lerp_amount += 1 - math::exp(-speed * dt);
 
       self.pos = gl::tween_pos_by_dir(self.pos, self.dirs & CURR_DIR_MASK, self.lerp_amount);
     }
@@ -106,8 +125,43 @@ fn void PacMan.move(&self, Tile *tiles) {
   self.can_turn_180 = false;
 }
 
-fn void PacMan.draw(&self, TimeSpan dt, bool dead = false) {
-  Rectangle src;
+fn void PacMan.update_animation(&self, TimeSpan dt) @dynamic {
+  Uint8 row = 0;
+  Uint8 flip = 0;
+
+  defer self.animation.update_frame(row, dt, flip);
+  
+  if(self.state_flags & PacManState.DEAD) {
+    row = 3;
+    return;
+  }
+  
+  if(self.dirs & CURR_DIR_MASK == Direction.NONE || self.can_turn_180) {
+    row = 0;
+    return;
+  }
+  
+  switch(self.dirs & CURR_DIR_MASK) {
+    case Direction.UP		: row = 2; flip = animator::FLIP_VERTICALLY;   break;
+    case Direction.LEFT	        : row = 1; flip = animator::FLIP_HORIZONTALLY; break;
+    case Direction.RIGHT	: row = 1;                                     break;
+    case Direction.DOWN	        : row = 2;                                     break;
+    default			: break;
+  }
+}
+
+<*
+ @param [&in] tiles : "Tiles was passed as null"
+*>
+fn void PacMan.update(&self, uint level, Tile *tiles, TimeSpan dt) {
+  if(!(self.state_flags & PacManState.DEAD)) {
+    self.move(tiles, dt, get_speed(level));
+  }
+  
+  self.update_animation(dt);
+}
+
+fn void PacMan.draw(&self) {
                                 // Pacman in atlas is not centered 
   Rectangle dest = {            //                 ⌄⌄⌄⌄⌄⌄⌄⌄⌄⌄⌄⌄⌄⌄
     (float)self.pos.x - gl::SPRITE_SIZE_SCALED / 4 + gl::SCALE / 2,
@@ -115,35 +169,33 @@ fn void PacMan.draw(&self, TimeSpan dt, bool dead = false) {
     gl::SPRITE_SIZE_SCALED,
     gl::SPRITE_SIZE_SCALED,
   };
-
-  if(dead) {
-    src = src = self.animation.get_src(2, dt);
-    rl::draw_texture_pro(*self.animation.atlas_ptr, src, dest, (float[<2>]){0, 0}, 0, (Color){255, 255, 255, 255});
-    return;
-  }
-  
-  if(self.dirs & CURR_DIR_MASK == Direction.NONE || self.can_turn_180) {
-    self.animation.curr_image = 0;
-    src = { 1.f, 1.f, gl::SPRITE_SIZE, gl::SPRITE_SIZE };
-    rl::draw_texture_pro(*self.animation.atlas_ptr, src, dest, (float[<2>]){0, 0}, 0, (Color){255, 255, 255, 255});
-    return;
-  }
-  
-  switch(self.dirs & CURR_DIR_MASK) {
-    case Direction.UP		: src = self.animation.get_src(1, dt, flip: animator::FLIP_VERTICALLY  ); break;
-    case Direction.LEFT	        : src = self.animation.get_src(0, dt, flip: animator::FLIP_HORIZONTALLY); break;
-    case Direction.RIGHT	: src = self.animation.get_src(0, dt                                   ); break;
-    case Direction.DOWN	        : src = self.animation.get_src(1, dt                                   ); break;
-    default			: break;
-  }
             
-  rl::draw_texture_pro(*self.animation.atlas_ptr, src, dest, (float[<2>]){0, 0}, 0, (Color){255, 255, 255, 255});
+  rl::draw_texture_pro(*self.animation.atlas_ptr,
+		       self.animation.uv_rect,
+		       dest,
+		       (float[<2>]){0, 0},
+		       0,
+		       (Color){255, 255, 255, 255}
+  );
+}
+
+//===========================================================================================
+// Helper functions
+//============================================================================================
+
+fn float get_speed(uint level) @private {
+  if(level == 1) return 9.6f; // 80%
+
+  if(level < 5) return 10.8f; // 90%
+
+  return 12.f; // 100%
 }
 
 <*
  @param [&in] tiles
 *>
 fn bool is_early_turn(Tile *tiles, Int16[<2>] pos, Uint8 curr, Uint8 desired) @private {
+  const BASE_SPEED = 4;
   curr &= CURR_DIR_MASK;
   
   if(curr == desired) return false;

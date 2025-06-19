@@ -1,6 +1,7 @@
 module ghost;
 
 import std::io;
+import std::math;
 
 import gl;
 import rl;
@@ -10,9 +11,7 @@ import maze;
 import pacman;
 import game_ctx::gameplay;
 
-const SPAWN_SPEED = 0.02f;
-const FRIGHTEN_SPEED = 0.07f;
-const NORMAL_SPEED = 0.13f;
+const SPAWN_SPEED @private = 2.f;
 
 enum GhostType : inline Uint8 {
   BLINKY,
@@ -27,31 +26,40 @@ enum GhostState : Uint8 (inline Uint8 state) {
   LEAVING_SPAWN        = 1 << 2,
   FRIGHTEN             = 1 << 3,
   DEAD                 = 1 << 4,
+  ELROY                = 1 << 5,
+  IN_TUNNEL            = 1 << 6
 }
 
 alias TargetCallback = fn Int16[<2>](PacMan *pacman, Ghost *other = null);
 
-struct Ghost {
+struct Ghost (AnimatorHandler) {
   Int16[<2>] pos;
   Uint8 dir;
   TimeSpan lerp_amount;
-  
+
+  // TODO
   // Bit layout:
+  // Bit 6 - in tunnel
+  // Bit 5 - elroy
   // Bit 4 - dead
   // Bit 3 - frighten mode
   // Bit 2 - leaving spawn
   // Bit 1 - entering spawn
   // Bit 0 - in spawn
   Uint8 state_flags;
+  Uint8 ghost_type;
   Uint8 dot_counter;
   
   TargetCallback get_target;
   Int16[<2>] scatter_tile;
-  
+
   Animator animation;
 }
 
-fn void Ghost.init(&self, Uint8 ghost_type = 0, Texture2D *atlas_ptr) {
+<*
+ @param [&in] ghost_atlas : "Ghost atlas was passed as null!"
+*>
+fn void Ghost.init(&self, Uint8 ghost_type = 0, Texture2D *ghost_atlas) {
   const Int16[<2>][4] FIXED_TILES_POS = {
     {  25 * gl::TILE_SCALED                        , 0 }, // Blinky
     {  2 * gl::TILE_SCALED                         , 0 }, // Pinky
@@ -60,16 +68,16 @@ fn void Ghost.init(&self, Uint8 ghost_type = 0, Texture2D *atlas_ptr) {
   };
 
   const TargetCallback[4] CALLBACK = { &blinky_target, &pinky_target, &inky_target, &clyde_target };
+
+  self.animation.init(ghost_atlas, start: 4 * ghost_type, end: 4 * (1 + ghost_type), switch_time: 0.15f);
   
-  self.animation.init(atlas_ptr, 0, 2, 0.15f);
-  
-  self.set_at_start_pos(ghost_type);
-  
+  self.ghost_type = ghost_type;
+  self.set_at_start_pos();
   self.scatter_tile = FIXED_TILES_POS[ghost_type];
   self.get_target = CALLBACK[ghost_type];
 }
 
-fn void Ghost.set_at_start_pos(&self, Uint8 ghost_type = 0) {
+fn void Ghost.set_at_start_pos(&self) {
   const Int16[<2>][4] START_POS = {
     { 13 * gl::TILE_SCALED + gl::TILE_SCALED / 2, 14 * gl::TILE_SCALED }, // Blinky
     { 13 * gl::TILE_SCALED + gl::TILE_SCALED / 2, 17 * gl::TILE_SCALED }, // Pinky
@@ -77,10 +85,10 @@ fn void Ghost.set_at_start_pos(&self, Uint8 ghost_type = 0) {
     { 15 * gl::TILE_SCALED + gl::TILE_SCALED / 2, 17 * gl::TILE_SCALED }, // Clyde
   };
 
-  self.pos = START_POS[ghost_type];
+  self.pos = START_POS[self.ghost_type];
   self.lerp_amount = 0.0f;
   
-  switch(ghost_type) {
+  switch(self.ghost_type) {
     case GhostType.BLINKY: self.dir = Direction.LEFT; break;
     case GhostType.INKY:
     case GhostType.CLYDE:  self.dir = Direction.UP;   break;
@@ -90,7 +98,9 @@ fn void Ghost.set_at_start_pos(&self, Uint8 ghost_type = 0) {
   self.dot_counter = 0;
   
   self.state_flags = 0;
-  if(ghost_type != GhostType.BLINKY) self.state_flags |= GhostState.IN_SPAWN;
+  if(self.ghost_type != GhostType.BLINKY) self.state_flags |= GhostState.IN_SPAWN;
+
+  self.update_animation(dt: 0);
 }
 
 fn bool Ghost.collision(&self, Int16[<2>] pacman_pos) {
@@ -118,19 +128,19 @@ fn void Ghost.turn_180(&self) {
 <*
  @param [&in] tiles
 *>
-fn void Ghost.roam_in_spawn(&self, Tile *tiles) {
+fn void Ghost.roam_in_spawn(&self, Tile *tiles, TimeSpan dt) {
   Int16 start_y;
   Int16 end_y;
 
   if(self.lerp_amount > 1.f) self.lerp_amount = 0.0f;
-  self.lerp_amount += SPAWN_SPEED;
+  self.lerp_amount += 1 - math::exp(-SPAWN_SPEED * dt);
   
   if(self.pos.y == 16 * gl::TILE_SCALED + gl::TILE_SCALED / 2 && self.dir == Direction.UP) {
     self.dir = Direction.DOWN;
-    self.lerp_amount = SPAWN_SPEED;
+    self.lerp_amount = 1 - math::exp(-SPAWN_SPEED * dt);
   } else if(self.pos.y == 18 * gl::TILE_SCALED - gl::TILE_SCALED / 2 && self.dir == Direction.DOWN) {
     self.dir = Direction.UP;
-    self.lerp_amount = SPAWN_SPEED;
+    self.lerp_amount = 1 - math::exp(-SPAWN_SPEED * dt);
   }
     
   if(self.dir == Direction.UP) {
@@ -157,7 +167,7 @@ fn void Ghost.roam_in_spawn(&self, Tile *tiles) {
 <*
  @param [&in] tiles
 *>
-fn void Ghost.return_to_spawn(&self, Tile *tiles) {
+fn void Ghost.return_to_spawn(&self, uint level, Tile *tiles, TimeSpan dt) {
   const Int16[<2>] EXIT = {
     13 * gl::TILE_SCALED + gl::TILE_SCALED / 2,
     14 * gl::TILE_SCALED
@@ -168,6 +178,7 @@ fn void Ghost.return_to_spawn(&self, Tile *tiles) {
     17 * gl::TILE_SCALED,
   };
 
+  float speed;
   bool update = true;
   
   defer {
@@ -175,14 +186,20 @@ fn void Ghost.return_to_spawn(&self, Tile *tiles) {
       if(self.lerp_amount >= 1.f || gl::is_aligned(self.pos)) self.lerp_amount = 0.0f;  
     
       if(self.state_flags & GhostState.ENTERING_SPAWN) {
-	self.lerp_amount += SPAWN_SPEED;
+	self.lerp_amount += 1 - math::exp(-SPAWN_SPEED * dt);
 	self.pos = gl::tween_pos_by_tiles(EXIT, CENTER, self.lerp_amount);
       } else {
-	self.lerp_amount += NORMAL_SPEED;
+	speed = get_speed(level, self.state_flags); 
+	self.lerp_amount += 1 - math::exp(-speed * dt);
 	self.pos = gl::tween_pos_by_dir(self.pos, self.dir, self.lerp_amount);
       }
     
-      gl::handle_tunnel_wrap(&self.pos);
+      if(gl::in_tunnel((Int8[<2>])(self.pos / gl::TILE_SCALED))) {
+	self.state_flags |= GhostState.IN_TUNNEL;    
+	gl::handle_tunnel_wrap(&self.pos);
+      } else if(self.state_flags & GhostState.IN_TUNNEL) { // Disable being in a tunnel
+	self.state_flags ^= GhostState.IN_TUNNEL;
+      }
     }
   }
 
@@ -238,22 +255,23 @@ fn void Ghost.return_to_spawn(&self, Tile *tiles) {
  @param [&in] tiles : "Tiles was passed as null!"
  @param [&inout] rng_index "Rng index was passed as null!"
 *>
-fn void Ghost.leave_spawn(&self, Tile *tiles, Uint16* rng_index) {
+fn void Ghost.leave_spawn(&self, Tile *tiles, Uint16* rng_index, TimeSpan dt) {
   const CENTER_X = 13 * gl::TILE_SCALED + gl::TILE_SCALED / 2;
   const CENTER_Y = 17 * gl::TILE_SCALED;
   const EXIT_Y  =  14 * gl::TILE_SCALED;
-  
+
   Int16[<2>] start, end;
   defer {
     if(self.lerp_amount >= 1.f) self.lerp_amount = 0.0f;
-    self.lerp_amount += SPAWN_SPEED;
+    self.lerp_amount += 1 - math::exp(-SPAWN_SPEED * dt);
     self.pos = gl::tween_pos_by_tiles(start, end, self.lerp_amount);
   }
   
   if(self.pos.y == EXIT_Y) {
     *rng_index = (5 * *rng_index + 1) % 8192;
     self.dir = get_rnd_dir(&self.pos, &self.dir, tiles, *rng_index);
-    
+
+    self.lerp_amount = 0.5f;
     self.state_flags &= (Uint8)~GhostState.IN_SPAWN.state;
     self.state_flags &= (Uint8)~GhostState.LEAVING_SPAWN.state;
 
@@ -302,22 +320,26 @@ fn void Ghost.leave_spawn(&self, Tile *tiles, Uint16* rng_index) {
  @param [&in] tiles : "Tiles was passed as null!"
  @param [&inout] rng_index "Rng index was passed as null!"
 *>
-fn void Ghost.move(&self, Tile *tiles, Int16[<2>] pacman_pos, Uint8 global_state, Uint16* rng_index) {
+fn void Ghost.move(&self, Tile *tiles, Int16[<2>] pacman_pos, uint level, Uint8 global_state, Uint16* rng_index, TimeSpan dt) {
   defer {
     if(gl::is_aligned(self.pos) || self.lerp_amount >= 1.f) self.lerp_amount = 0.0f;
 
-    if(self.state_flags & GhostState.FRIGHTEN ){ self.lerp_amount += FRIGHTEN_SPEED; }
-    else { self.lerp_amount += NORMAL_SPEED; }
-
+    float speed = get_speed(level, self.state_flags);
+    self.lerp_amount += 1 - math::exp(-speed * dt);
+    
     self.pos = gl::tween_pos_by_dir(self.pos, self.dir, self.lerp_amount);
   }
   
   if(!gl::is_aligned(self.pos) && self.dir != Direction.NONE) return;
 
   if(gl::in_tunnel((Int8[<2>])(self.pos / gl::TILE_SCALED))) {
+    self.state_flags |= GhostState.IN_TUNNEL;    
     gl::handle_tunnel_wrap(&self.pos);
     return;
   }
+
+  // Disable being in a tunnel
+  if(self.state_flags & GhostState.IN_TUNNEL) self.state_flags ^= GhostState.IN_TUNNEL;
   
   if(self.state_flags & GhostState.FRIGHTEN) {
     *rng_index = (5 * *rng_index + 1) % 8192;
@@ -326,7 +348,7 @@ fn void Ghost.move(&self, Tile *tiles, Int16[<2>] pacman_pos, Uint8 global_state
   }
 
   Int16[<2>] target_pos;
-  if(global_state & GameplayState.CHASE_MODE) { target_pos = pacman_pos; }
+  if(global_state & GameplayState.CHASE_MODE || self.state_flags & GhostState.ELROY) { target_pos = pacman_pos; }
   else { target_pos = self.scatter_tile; }
     
   bool tunnel_penalty;
@@ -348,28 +370,89 @@ fn void Ghost.move(&self, Tile *tiles, Int16[<2>] pacman_pos, Uint8 global_state
   self.dir = best_dir;
 }
 
-fn void Ghost.draw(&self, Uint8 ghost_type, TimeSpan dt) {
-  Uint8 row;
-
-  if(self.state_flags & GhostState.FRIGHTEN) {
-    row = 8;
-    self.animation.update_count(0, 4);
-  }
-  else{
-    if(self.state_flags & GhostState.DEAD) { row = 7; }
-    else { row = ghost_type + 3; }
+fn void Ghost.update_animation(&self, TimeSpan dt) @dynamic {
+  Uint8 row = 0;
+  Uint8 flip = 0;
   
-    switch(self.dir) {
-      case Direction.UP		: self.animation.update_count(6, 8); break;
-      case Direction.LEFT	: self.animation.update_count(4, 6); break;
-      case Direction.RIGHT	: self.animation.update_count(0, 2); break;
-      case Direction.DOWN	: self.animation.update_count(2, 4); break;
-      default			: break;
+  defer self.animation.update_frame(row, dt, flip);
+  
+  if(self.state_flags & GhostState.FRIGHTEN) {
+    row = 4;
+    return;
+  }
+
+  if(self.state_flags & GhostState.DEAD) { self.animation.update_count(start: 16, end: 20); }
+  else if(self.animation.start != 4 * self.ghost_type) { // Change back to normal
+    self.animation.update_count(start: 4 * self.ghost_type, end: 4 * (1 + self.ghost_type));
+  }
+  
+  switch(self.dir) {
+    case Direction.UP		: row = 3; break;
+    case Direction.LEFT	        : row = 2; break;
+    case Direction.RIGHT	: row = 0; break;
+    case Direction.DOWN	        : row = 1; break;
+    default			: break;
+  }
+
+}
+
+<*
+ @param [&in] ctx : "game context passed as null!"
+ @param [&out] collision : "Collision passed as null!"
+*>
+fn void Ghost.update(&self, Gameplay *ctx, bool *collision, bool dot_eaten, TimeSpan dt) {
+  static bool prev_ghost_leaves_spawn = false;
+
+  defer self.update_animation(dt);
+
+  // 1. Check spawn conditions
+  if(self.state_flags & GhostState.DEAD) {
+    self.return_to_spawn(ctx.timer.level, &ctx.maze.tiles, dt);
+    return;
+  }
+  
+  bool exceeds_time = ctx.timer.exceeds_dot_not_eaten_dur(dt, dot_eaten);
+  if(!inside_spawn(self.pos, self.state_flags)) { prev_ghost_leaves_spawn = true; }
+  else if(should_leave_spawn(self.ghost_type,
+			exceeds_time,
+			self.dot_counter,
+			self.state_flags,
+			(bool)(ctx.flags & GameplayState.USE_GLOBAL_COUNTER),
+			ctx.global_ghosts_dot_counter,
+			ctx.timer.level) && prev_ghost_leaves_spawn || self.ghost_type == GhostType.BLINKY
+  ) {
+      
+    if(exceeds_time) ctx.timer.reset_dot_not_eaten();
+      
+    prev_ghost_leaves_spawn = true;
+    self.state_flags |= GhostState.LEAVING_SPAWN;
+    self.leave_spawn(&ctx.maze.tiles, &ctx.rng_index, dt);
+    return;
+  } else {
+    self.roam_in_spawn(&ctx.maze.tiles, dt);
+    prev_ghost_leaves_spawn = false;
+    return;
+  }
+
+  // 2. Move the target based on chase, scatter, frighten mode
+  Ghost *other_ghost = null;
+  if(self.ghost_type == GhostType.INKY) { other_ghost = &ctx.ghosts[0]; }
+  else if(self.ghost_type == GhostType.CLYDE) { other_ghost = &ctx.ghosts[3]; }
+
+  self.move(&ctx.maze.tiles, self.get_target(&ctx.pacman, other_ghost), ctx.timer.level, ctx.flags, &ctx.rng_index, dt);
+
+  if(self.collision(ctx.pacman.pos)) {
+    *collision = true;
+    
+    if(self.state_flags & GhostState.FRIGHTEN) {
+      self.turn_180();
+      self.state_flags ^= GhostState.FRIGHTEN;
+      self.state_flags |= GhostState.DEAD;
     }
   }
+}
 
-  Rectangle src = self.animation.get_src(row, dt);
-  
+fn void Ghost.draw(&self) {
   Rectangle dest = {
     (float)self.pos.x - gl::SPRITE_SIZE_SCALED / 4,
     (float)self.pos.y - gl::SPRITE_SIZE_SCALED / 4,
@@ -377,8 +460,17 @@ fn void Ghost.draw(&self, Uint8 ghost_type, TimeSpan dt) {
     gl::SPRITE_SIZE_SCALED,
   };
             
-  rl::draw_texture_pro(*self.animation.atlas_ptr, src, dest, (float[<2>]){0, 0}, 0, (Color){255, 255, 255, 255});
+  rl::draw_texture_pro(*self.animation.atlas_ptr,
+		       self.animation.uv_rect,
+		       dest,
+		       (float[<2>]){0, 0},
+		       0,
+		       (Color){255, 255, 255, 255});
 }
+
+//===========================================================================================
+// Helper functions
+//============================================================================================
 
 fn Uint16 sqrt_dist(Int16[<2>] a, Int16[<2>] b) @private {
   Uint16 dx = a.x - b.x;
@@ -386,7 +478,53 @@ fn Uint16 sqrt_dist(Int16[<2>] a, Int16[<2>] b) @private {
   return dx * dx + dy * dy;
 }
 
-fn bool inside_spawn(Int16[<2>] pos, Uint8 state_flags) {
+fn bool activate_elroy(uint level, Uint8 eaten_dots) {
+  Uint8 activation = 0;
+
+  switch {
+    case level == 1 : activation = 20;  break;
+    case level == 2 : activation = 30;  break;
+    case level <= 5 : activation = 40;  break;
+    case level <= 8 : activation = 50;  break;
+    case level <= 14: activation = 80;  break;
+    case level <= 17: activation = 100; break;
+    default         : activation = 120; break;
+  }
+  
+  return eaten_dots == 244 - activation;
+}
+
+fn float get_speed(uint level, Uint8 state_flags) @private {
+  if(state_flags & GhostState.IN_TUNNEL) {
+    if(level == 1) return 4.8f; // 40%
+    if(level < 3)  return 5.4f; // 45%
+
+    return 6.f; // 50%
+  }
+
+  if(state_flags & GhostState.FRIGHTEN) {
+    if(level == 1) return 6.f;  // 50%
+    if(level < 3)  return 6.6f; // 55%
+
+    return 7.2f; // 60%
+  }
+
+  // Only Blinky has elroy
+  if(state_flags & GhostState.ELROY) {
+    if(level == 1) return 9.6f;  // 80%
+    if(level < 3)  return 10.2f; // 90%
+
+    return 12.f; // 100%
+  }
+
+  // Chase or scatter mode
+  if(level == 1) return 9.f;   // 75%
+  if(level < 3)  return 10.2f; // 85%
+  
+  return 11.4f; // 95% 
+}
+
+fn bool inside_spawn(Int16[<2>] pos, Uint8 state_flags) @private {
   // Calculating for the center of ghost
   pos.y -= (Int8)gl::TILE_SCALED;
   
@@ -438,7 +576,7 @@ fn bool is_valid_move(Tile *tiles,
 		      Uint8 curr_dir,
 		      Uint8 potential_dir,
 		      bool frighten_mode = false,
-		      bool dead = false) {
+		      bool dead = false) @private {
   if(gl::is_reverse_dir(curr_dir, potential_dir)) return false;
   
   Int16[<2>] next_pos = gl::get_tile_offset(pos, potential_dir);
@@ -461,7 +599,7 @@ fn bool should_leave_spawn(int ghost_type,
 			   Uint8 ghost_state_flags,
 			   bool use_global_counter,
 			   Uint8 global_counter,
-			   uint level) {
+			   uint level) @private {
   const Uint8[2][3] GHOSTS_DOT_COUNTER = {
     { 0,  0  },  // Pinky
     { 30, 0  }, // Inky
@@ -490,7 +628,7 @@ fn bool should_leave_spawn(int ghost_type,
   return ghost_counter >= GHOSTS_DOT_COUNTER[ghost_type - 1][1];
 }
 
-fn void increase_counter(Uint8 curr_ghost, Uint8 *counter, int level) {
+fn void increase_counter(Uint8 curr_ghost, Uint8 *counter, uint level) {
   const Uint8[2][3] DOTS_COUNTER = {
     { 0 ,  0 },  // Pinky
     { 30,  0 },  // Inky
@@ -510,7 +648,7 @@ fn void increase_counter(Uint8 curr_ghost, Uint8 *counter, int level) {
  @param [&in] dir : "Dir passed as null!"
  @param [&in] tiles : "Maze tiles passed as null!"
 *>
-fn Uint8 get_rnd_dir(Int16[<2>] *pos, Uint8 *dir, Tile *tiles, Uint16 rng_index) {
+fn Uint8 get_rnd_dir(Int16[<2>] *pos, Uint8 *dir, Tile *tiles, Uint16 rng_index) @private {
   Uint8 rng_output;
   
   if(rng_index <= 2064)                           { rng_output = 3; }
@@ -527,45 +665,9 @@ fn Uint8 get_rnd_dir(Int16[<2>] *pos, Uint8 *dir, Tile *tiles, Uint16 rng_index)
   return *dir;
 }
 
-<*
- @param [&inout] ghost : "ghost passed as null!"
- @param [&in] ctx : "game context passed as null!"
-*>
-fn bool spawn_handler(Uint8 ghost_type, Ghost *ghost, Gameplay *ctx, bool dot_eaten){
-  static bool prev_ghost_leaves_spawn = false;
-  
-  if(ghost.state_flags & GhostState.DEAD) {
-    ghost.return_to_spawn(&ctx.maze.tiles);
-    return true;
-  }
-
-  bool exceeds_time = ctx.timer.exceeds_dot_not_eaten_dur(dot_eaten);
-  if(!inside_spawn(ghost.pos, ghost.state_flags)) {
-    prev_ghost_leaves_spawn = true;
-    return false;
-  }
-  
-  if(should_leave_spawn(ghost_type,
-			exceeds_time,
-			ghost.dot_counter,
-			ghost.state_flags,
-			(bool)(ctx.flags & GameplayState.USE_GLOBAL_COUNTER),
-			ctx.global_ghosts_dot_counter,
-			ctx.timer.level) && prev_ghost_leaves_spawn || ghost_type == GhostType.BLINKY
-  ) {
-      
-    if(exceeds_time) ctx.timer.reset_dot_not_eaten();
-      
-    prev_ghost_leaves_spawn = true;
-    ghost.state_flags |= GhostState.LEAVING_SPAWN;
-    ghost.leave_spawn(&ctx.maze.tiles, &ctx.rng_index);
-    return true;
-  }
-
-  prev_ghost_leaves_spawn = false;
-  ghost.roam_in_spawn(&ctx.maze.tiles);
-  return true;
-}
+//===========================================================================================
+// Callback functions
+//============================================================================================
 
 <*
  @param [&in] pacman

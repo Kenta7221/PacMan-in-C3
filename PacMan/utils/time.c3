@@ -1,16 +1,12 @@
 module timer;
 
 import std::io;
-import std::time;
 
 import gl;
 
 const TimeSpan INDEFINITE @private = TimeSpan.max / 2;
 
 struct Timer {
-  Clock clock;
-  TimeSpan dt;
-  
   uint level;
   uint which_cycle;
   
@@ -24,11 +20,7 @@ fn void Timer.init(&self) {
   self.which_cycle = 1;
   self.level = 1;
   
-  self.clock.mark();
-
-  self.dt = 0.f;
-  self.elapsed_time = 0.f;
-  
+  self.elapsed_time = 0.f;  
   self.frighten_mode = 0.f;
   self.cycle = 0.f;
   self.dot_not_eaten = 0.f;
@@ -42,34 +34,33 @@ fn void Timer.reset(&self) {
   self.dot_not_eaten = 0.f;
 }
 
-fn void Timer.update(&self) {
+fn void Timer.update(&self, TimeSpan new_time) {
   const TimeSpan CLAMP_TIME = TimeSpan.max / 4;
 
   // TODO: Make this good this time beacuse this will fuck everythink
   if(self.elapsed_time > CLAMP_TIME) self.elapsed_time = 0.f;
   
-  self.dt = (TimeSpan)self.clock.to_now().to_sec() - self.elapsed_time;
-  self.elapsed_time = (TimeSpan)self.clock.to_now().to_sec();
+  self.elapsed_time = new_time;
 }
 
 fn void Timer.reset_dot_not_eaten(&self) @inline {
   self.dot_not_eaten = 0.f;
 }
 
-fn bool Timer.exceeds_dot_not_eaten_dur(&self, bool dot_eaten) {
+fn bool Timer.exceeds_dot_not_eaten_dur(&self, TimeSpan dt, bool dot_eaten) {
   if(dot_eaten) {
     self.dot_not_eaten = 0.f;
     return false;
   }
 
-  self.dot_not_eaten += self.dt;
+  self.dot_not_eaten += dt;
   
   if(self.level >= 1 && self.level <= 5) return self.dot_not_eaten > 4.f;
 
   return self.dot_not_eaten > 3.f;
 }
 
-fn bool Timer.end_frighten_mode(&self, bool frighten_mode) {  
+fn bool Timer.end_frighten_mode(&self, TimeSpan dt, bool frighten_mode) {  
   if(!frighten_mode) return false;
 
   // Immedietly end chase mode
@@ -77,17 +68,17 @@ fn bool Timer.end_frighten_mode(&self, bool frighten_mode) {
   
   if(duration == INDEFINITE) return true;
   
-  self.frighten_mode += self.dt;
+  self.frighten_mode += dt;
   return self.frighten_mode > duration;
 }
 
-fn bool Timer.new_cycle(&self) {
+fn bool Timer.new_cycle(&self, TimeSpan dt) {
   TimeSpan duration = get_ghost_cycle_dur(self.level, self.which_cycle);
 
   // If in the last cycle ghost are indefinitely in chase mode
   if(duration == INDEFINITE) return false;
   
-  self.cycle += self.dt;
+  self.cycle += dt;
   return self.cycle > duration;
 }
 

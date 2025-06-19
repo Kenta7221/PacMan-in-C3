@@ -10,11 +10,10 @@ import timer;
 
 struct DeathScreen {
   Font font;
-  Timer *timer;
   Maze maze;
 }
 
-fn void? DeathScreen.init(&self, Timer *timer) {
+fn void? DeathScreen.init(&self) {
   const String FONT_DIR = "assets/fonts/emulogic.ttf";
 
   self.font = rl::load_font_ex(FONT_DIR, gl::TEXT_SIZE, null, 0);
@@ -23,25 +22,24 @@ fn void? DeathScreen.init(&self, Timer *timer) {
     return io::FILE_NOT_FOUND?;
   }
   
-  self.timer = timer;
   self.maze.init()!!;
 }
 
 <*
  @param [&out] state : "Game state passed as null!"
 *>
-fn void DeathScreen.update(&self, GameState *state) {
+fn void DeathScreen.update(&self, GameState *state, TimeSpan dt) {
   static TimeSpan total_time = 0.0f;
-  total_time += self.timer.dt;
-
-  if(total_time < 2.0f) return;
+  total_time += dt;
+  
+  if(total_time < 3.0f) return;
 
   *state = TITLE_SCREEN;
   total_time = 0.0f;
 }
 
 fn void DeathScreen.draw(&self) {
-  self.maze.draw(dt: 0);
+  self.maze.draw();
 
   rl::draw_text_ex(self.font,
 		   "Game   Over",
@@ -57,6 +55,5 @@ fn void DeathScreen.draw(&self) {
 
 fn void DeathScreen.free(&self) {
   rl::unload_font(self.font);
-  //free(self.timer);
   self.maze.free();
 }
