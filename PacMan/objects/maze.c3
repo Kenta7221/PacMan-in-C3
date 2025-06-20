@@ -57,7 +57,7 @@ fn void Maze.reset_maze(&self) {
  @param [&in] pacman
 *>
 fn EventType Maze.update(&self, PacMan *pacman) {
-  if(pacman.can_turn_180) return NONE;
+  if(pacman.state_flags & PacManState.TURN_180) return NONE;
 
   Uint8[<2>] tile = {
     (Uint8)(pacman.pos.x / gl::TILE_SCALED),

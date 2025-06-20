@@ -18,6 +18,8 @@ struct GameContext {
   TimeSpan dt;
   TimeSpan accumulator;
   TimeSpan curr_time;
+
+  float volume;
   
   TitleScreen *title_screen;
   Gameplay *gameplay;
@@ -29,6 +31,8 @@ fn void? GameContext.init(&self) {
   self.dt = 0.01f;
   self.accumulator = 0.0f;
   self.curr_time = (TimeSpan)self.clock.to_now().to_sec();
+
+  self.volume = 0.5f;
   
   self.title_screen = mem::new(TitleScreen);
   self.title_screen.init()!!;
@@ -78,6 +82,12 @@ fn void GameContext.change_state(&self, GameState *state) {
 fn void GameContext.update(&self, GameState *state, bool *end_game) {
   GameState prev_state = *state;
 
+  if(rl::is_key_down(rl::KEY_LEFT)) { self.volume -= 0.01; }
+  else if(rl::is_key_down(rl::KEY_RIGHT)) { self.volume += 0.01; }
+    
+  if(self.volume <= 0.f) self.volume = 0.f;
+  if(self.volume >= 1.f) self.volume = 1.f;
+  
   TimeSpan new_time = (TimeSpan)self.clock.to_now().to_sec();
   TimeSpan frame_time = new_time - self.curr_time;
   self.curr_time = new_time;
@@ -87,7 +97,7 @@ fn void GameContext.update(&self, GameState *state, bool *end_game) {
   while(self.accumulator >= self.dt) {
     bool update_game_loop = false;
     
-    if(*state == TITLE_SCREEN) { self.title_screen.update(state, self.dt); }
+    if(*state == TITLE_SCREEN) { self.title_screen.update(state, self.dt, self.volume); }
     else if(*state == GAMEPLAY) {
       self.gameplay.update_state(state, &update_game_loop, self.dt);
       if(update_game_loop) self.gameplay.game_loop(new_time, self.dt);

@@ -29,8 +29,7 @@ struct PacMan (AnimatorHandler) {
   // Bit 1 - Dead
   // Bit 0 - Can turn 180
   Uint8 state_flags;
-  bool can_turn_180;
-
+  
   Texture2D texture;
   Animator animation;
 }
@@ -62,7 +61,6 @@ fn void PacMan.set_at_start_pos(&self) {
   self.pos = BASE_POS;
   self.state_flags = 0;
   
-  self.can_turn_180 = false;
   self.dirs = (Direction.NONE.type << 4) | (Direction.NONE.type);
 
   self.update_animation(dt: 0);
@@ -77,7 +75,7 @@ fn void PacMan.move(&self, Tile *tiles, TimeSpan dt, float speed) {
   Tile next_tile;
 
   defer {
-    if(!self.can_turn_180) {
+    if(!(self.state_flags & PacManState.TURN_180)) {
       if(gl::is_aligned(self.pos) || self.lerp_amount >= 1.f) self.lerp_amount = 0.0f;
       self.lerp_amount += 1 - math::exp(-speed * dt);
 
@@ -101,7 +99,8 @@ fn void PacMan.move(&self, Tile *tiles, TimeSpan dt, float speed) {
   else if(rl::is_key_down(rl::KEY_S)) { input_dir = Direction.DOWN;  }
   
   // PacMan is forbiden from turning 180 deg while moving
-  if(input_dir != Direction.NONE && !gl::is_reverse_dir(self.dirs, input_dir) || self.can_turn_180 && input_dir != Direction.NONE) {
+  if(input_dir != Direction.NONE && !gl::is_reverse_dir(self.dirs, input_dir) ||
+     self.state_flags & PacManState.TURN_180 && input_dir != Direction.NONE) {
     next_pos = gl::get_tile_offset(self.pos, input_dir);
     next_tile = maze::get_tile_at(tiles, next_pos);
  
@@ -118,11 +117,11 @@ fn void PacMan.move(&self, Tile *tiles, TimeSpan dt, float speed) {
   next_pos = gl::get_tile_offset(self.pos, self.dirs);
   next_tile = maze::get_tile_at(tiles, next_pos);
   if(next_tile.type == WALL) {
-    self.can_turn_180 = true;
+    self.state_flags = PacManState.TURN_180;
     return;
   }
 
-  self.can_turn_180 = false;
+  if(self.state_flags & PacManState.TURN_180) self.state_flags ^= PacManState.TURN_180;
 }
 
 fn void PacMan.update_animation(&self, TimeSpan dt) @dynamic {
@@ -136,7 +135,7 @@ fn void PacMan.update_animation(&self, TimeSpan dt) @dynamic {
     return;
   }
   
-  if(self.dirs & CURR_DIR_MASK == Direction.NONE || self.can_turn_180) {
+  if(self.dirs & CURR_DIR_MASK == Direction.NONE || self.state_flags & PacManState.TURN_180) {
     row = 0;
     return;
   }

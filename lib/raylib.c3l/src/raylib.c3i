@@ -1,0 +1,3 @@
+module raylib;
+
+// extern fn int some_library_function();

@@ -29,13 +29,14 @@ c3c run
 const SCALE = 4;
 ```
 ## How to play
+- Press the **left arrow key** to **decrease** the volume and the **right arrow key** to **increase** it
 - Start the game by pressing **space bar**
 - Move using **WASD**
 - Collect all **244 dots** to advance to the next level
 - The game ends when **PacMan loses all his lives**
 ## Missing features
 - Frighten ghost **blink** continuously instead of only when the timer is almost over
-- **No audio**
+- **Missing audio**
 ## License
 This project is licensed under the [MIT License](LICENSE.md)
 ## Acknowledgments

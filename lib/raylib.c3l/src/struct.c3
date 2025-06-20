@@ -55,3 +55,34 @@ struct Font {
   Rectangle *recs;        // Rectangles in texture for the glyphs
   GlyphInfo *glyphs;      // Glyphs info data
 }
+
+// Opaque structs declaration
+// NOTE: Actual structs are defined internally in raudio module
+typedef AudioBufferRef = void*;
+typedef AudioProcessorRef = void*;
+
+// AudioStream, custom audio stream
+struct AudioStream {
+  AudioBufferRef buffer;       // Pointer to internal data used by the audio system
+  AudioProcessorRef processor; // Pointer to internal data processor, useful for audio effects
+
+  uint sample_rate;            // Frequency (samples per second)
+  uint sample_size;            // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+  uint channels;               // Number of channels (1-mono, 2-stereo, ...)
+}
+
+// Sound
+struct Sound {
+  AudioStream stream; // Audio stream
+  uint frame_count;   // Total number of frames (considering channels)
+}
+
+// Music, audio stream, anything longer than ~10 seconds should be streamed
+struct Music {
+  AudioStream stream; // Audio stream
+  uint frame_count;   // Total number of frames (considering channels)
+  bool looping;       // Music looping enable
+
+  int ctx_type;       // Type of music context (audio filetype)
+  void* ctx_data;     // Audio context data, depends on type
+}
