@@ -173,9 +173,9 @@ fn void PacMan.draw(&self) {
   rl::draw_texture_pro(*self.animation.atlas_ptr,
 		       self.animation.uv_rect,
 		       dest,
-		       (float[<2>]){0, 0},
+		       {0, 0},
 		       0,
-		       (Color){255, 255, 255, 255}
+		       {255, 255, 255, 255}
   );
 }
 

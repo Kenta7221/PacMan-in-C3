@@ -2,37 +2,15 @@
     "langrev": "1",
     "warnings": [ "no-unused" ],
     "dependency-search-paths": [ "lib" ],
-    "dependencies": [],
+    "dependencies": ["raylib"],
     "authors": [ "Antoni Regulski (@Kenta) <antek.regulski12@gmail.com>" ],
     "version": "0.1.0",
     "sources": [ "PacMan/**", "assets/**" ],
     "c-include-dirs": [ "csource/include" ],
     "output": "build",
     "targets": {
-	"linux-x64": {
-	    "type": "executable",
-	    "linker-search-paths": ["csource/linux-x64"],
-	    "linked-libraries" : ["raylib"]
-	},
-	"windows-x64": {
-            "type": "executable",
-	    "linker-search-paths": ["csource/windows-x64"],
-	    "linked-libraries" : ["raylib",
-				  "opengl32",
-				  "kernel32",
-				  "user32",
-				  "gdi32",
-				  "winmm",
-				  "winspool",
-				  "comdlg32",
-				  "advapi32",
-				  "shell32",
-				  "ole32",
-				  "oleaut32",
-				  "uuid",
-				  "odbc32",
-				  "odbccp32"],
-	    "wincrt": "none"
+	"pacman": {
+	    "type": "executable"
 	}
     },
     "cpu": "generic",

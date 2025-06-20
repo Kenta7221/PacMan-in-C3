@@ -190,7 +190,7 @@ fn void draw_maze_points(Texture2D *maze_atlas, Font *font) {
     gl::TILE_SCALED
   };
             
-  rl::draw_texture_pro(*maze_atlas, src, dest, (float[<2>]){0, 0}, 0, (Color){255, 255, 255, 255});
+  rl::draw_texture_pro(*maze_atlas, src, dest, {0, 0}, 0, {255, 255, 255, 255});
 
   rl::draw_text_ex(*font,
 		   "10 pts",
@@ -200,7 +200,7 @@ fn void draw_maze_points(Texture2D *maze_atlas, Font *font) {
 		   },
 		   gl::TEXT_SIZE,
 		   0.f,
-		   (Color){255, 255, 255, 255}
+		   {255, 255, 255, 255}
   );
   
   src.x = ENERGIZER_UV.x;
@@ -208,7 +208,7 @@ fn void draw_maze_points(Texture2D *maze_atlas, Font *font) {
 
   dest.y = 26 * gl::TILE_SCALED;
   
-  rl::draw_texture_pro(*maze_atlas, src, dest, (float[<2>]){0, 0}, 0, (Color){255, 255, 255, 255});
+  rl::draw_texture_pro(*maze_atlas, src, dest, {0, 0}, 0, {255, 255, 255, 255});
   
   rl::draw_text_ex(*font,
 		   "50 pts",

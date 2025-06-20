@@ -120,7 +120,7 @@ fn void Fruit.draw(&self) {
     gl::SPRITE_SIZE_SCALED,
   };
             
-  rl::draw_texture_pro(self.texture, src, dest, (float[<2>]){0, 0}, 0, (Color){255, 255, 255, 255});
+  rl::draw_texture_pro(self.texture, src, dest, {0, 0}, 0, {255, 255, 255, 255});
 }
 
 fn void Fruit.free(&self) {

@@ -4,6 +4,11 @@ module rl;
 // Structures Definition
 //----------------------------------------------------------------------------------------------------
 
+struct Vector2 {
+  float x;
+  float y;
+}
+
 struct Color {
   char r;
   char g;

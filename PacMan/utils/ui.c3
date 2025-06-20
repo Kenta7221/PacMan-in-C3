@@ -89,8 +89,8 @@ fn void GameUI.draw(&self, Texture2D *pacman_texture, Uint8 pacman_lives, bool d
   libc::sprintf(str, "%d", self.high_score);
   
   padding = (Uint16)str.char_len() - 1;
-  Uint16[<2>] high_score_pos = {
-    (Uint16)(15 * gl::TILE_SCALED + 3 * gl::TILE_SCALED / 5 - padding * gl::TILE_SCALED + padding * (gl::SCALE + 3) - gl::SCALE / 2),
+  Vector2 high_score_pos = {
+    (float)(15 * gl::TILE_SCALED + 3 * gl::TILE_SCALED / 5 - padding * gl::TILE_SCALED + padding * (gl::SCALE + 3) - gl::SCALE / 2),
     gl::TEXT_SIZE
   };
 
@@ -102,16 +102,16 @@ fn void GameUI.draw(&self, Texture2D *pacman_texture, Uint8 pacman_lives, bool d
 		   },
 		   gl::TEXT_SIZE,
 		   0.f,
-		   (Color){255, 255, 255, 255}
+		   {255, 255, 255, 255}
   );
   
-  rl::draw_text_ex(self.font, str, high_score_pos, gl::TEXT_SIZE, 0.f, (Color){255, 255, 255, 255});
+  rl::draw_text_ex(self.font, str, high_score_pos, gl::TEXT_SIZE, 0.f, {255, 255, 255, 255});
 
   // Player score
   libc::sprintf(str, "%d", self.score);
   padding = (Uint16)str.char_len() - 1;
-  Uint16[<2>] player_score_pos = {
-    (Uint16)(6 * gl::TILE_SCALED + gl::TILE_SCALED / 3 - padding * gl::TILE_SCALED + padding * (gl::SCALE + 3) - gl::SCALE / 2),
+  Vector2 player_score_pos = {
+    (float)(6 * gl::TILE_SCALED + gl::TILE_SCALED / 3 - padding * gl::TILE_SCALED + padding * (gl::SCALE + 3) - gl::SCALE / 2),
     gl::TEXT_SIZE
   };
 
@@ -123,10 +123,10 @@ fn void GameUI.draw(&self, Texture2D *pacman_texture, Uint8 pacman_lives, bool d
 		   },
 		   gl::TEXT_SIZE,
 		   0.f,
-		   (Color){255, 255, 255, 255}
+		   {255, 255, 255, 255}
   );
 
-  rl::draw_text_ex(self.font, str, player_score_pos, gl::TEXT_SIZE, 0.f, (Color){255, 255, 255, 255});
+  rl::draw_text_ex(self.font, str, player_score_pos, gl::TEXT_SIZE, 0.f, {255, 255, 255, 255});
 
   free(str);
 
@@ -149,7 +149,7 @@ fn void GameUI.draw(&self, Texture2D *pacman_texture, Uint8 pacman_lives, bool d
 			   gl::SPRITE_SIZE_SCALED,
 			 },
 			  
-			 (float[<2>]){0, 0}, 0, (Color){255, 255, 255, 255}
+			 {0, 0}, 0, {255, 255, 255, 255}
     );
   }
   
@@ -211,149 +211,9 @@ fn void GameUI.draw(&self, Texture2D *pacman_texture, Uint8 pacman_lives, bool d
       gl::SPRITE_SIZE_SCALED,
     };
 
-    rl::draw_texture_pro(self.texture, src, dest, (float[<2>]){0, 0}, 0, (Color){255, 255, 255, 255});
+    rl::draw_texture_pro(self.texture, src, dest, {0, 0}, 0, {255, 255, 255, 255});
   }
 }
-
-// <*
-//  @param [&in] pacman_texture : "PacMan's texture was passed as null!"
-//  @param [&in] fruit_texture : "Fruit texture was passed as null!"
-// *>
-// fn void GameUI.draw(&self, Texture2d *pacman_texture, Texture2d *fruit_texture, Uint8 pacman_lives, bool draw_fruits = true) {  
-//   ZString str = (ZString)mem::new_array(char, 12);
-//   Uint16 padding;
-  
-//   if(self.score >= self.high_score) self.high_score = self.score;
-  
-//   // High Score    
-//   libc::sprintf(str, "%d", self.high_score);
-  
-//   padding = (Uint16)str.char_len() - 1;
-//   Uint16[<2>] high_score_pos = {
-//     (Uint16)(15 * gl::TILE_SCALED + 3 * gl::TILE_SCALED / 5 - padding * gl::TILE_SCALED + padding * (gl::SCALE + 3) - gl::SCALE / 2),
-//     gl::TEXT_SIZE
-//   };
-
-//   rl::draw_text_ex(self.font,
-// 		   "High Score",
-// 		   {
-// 		     10 * gl::TILE_SCALED,
-// 		     0
-// 		   },
-// 		   gl::TEXT_SIZE,
-// 		   0.f,
-// 		   (Color){255, 255, 255, 255}
-//   );
-  
-//   rl::draw_text_ex(self.font, str, high_score_pos, gl::TEXT_SIZE, 0.f, (Color){255, 255, 255, 255});
-
-//   // Player score
-//   libc::sprintf(str, "%d", self.score);
-//   padding = (Uint16)str.char_len() - 1;
-//   Uint16[<2>] player_score_pos = {
-//     (Uint16)(6 * gl::TILE_SCALED + gl::TILE_SCALED / 3 - padding * gl::TILE_SCALED + padding * (gl::SCALE + 3) - gl::SCALE / 2),
-//     gl::TEXT_SIZE
-//   };
-
-//   rl::draw_text_ex(self.font,
-// 		   "1UP",
-// 		   {
-// 		     4 * gl::TILE_SCALED,
-// 		     0
-// 		   },
-// 		   gl::TEXT_SIZE,
-// 		   0.f,
-// 		   (Color){255, 255, 255, 255}
-//   );
-
-//   rl::draw_text_ex(self.font, str, player_score_pos, gl::TEXT_SIZE, 0.f, (Color){255, 255, 255, 255});
-
-//   free(str);
-  
-//   // Lives
-//   for(Uint8 i = 0; i < pacman_lives; i++) {
-//     rl::draw_texture_pro(*self.atlas_ptr,
-// 			 { /*src*/
-//  			   2.f + gl::SPRITE_SIZE,
-// 			   1.f,
-// 			   -1 * gl::SPRITE_SIZE,
-// 			   gl::SPRITE_SIZE
-// 			 },
-			  
-// 			 { /*destination*/
-// 			   (float)(2 * gl::TEXT_SIZE + 2 * i * gl::TEXT_SIZE),
-// 			   (gl::MAZE_HEIGHT + gl::TOP_UI_SIZE) * gl::TILE_SCALED,
-// 			   gl::SPRITE_SIZE_SCALED,
-// 			   gl::SPRITE_SIZE_SCALED,
-// 			 },
-			  
-// 			 (float[<2>]){0, 0}, 0, (Color){255, 255, 255, 255}
-//     );
-//   }
-
-//   if(!draw_fruits) return;
-  
-//   Rectangle src = {
-//     0 * gl::SPRITE_SIZE + 0 * gl::PADDING + gl::PADDING,
-//     9 * gl::SPRITE_SIZE + 9 * gl::PADDING + gl::PADDING,
-//     gl::SPRITE_SIZE,
-//     gl::SPRITE_SIZE
-//   };
-        
-//   // Fruits list
-//   foreach(idx, fruit : self.fruit_table) {
-//     if(fruit == 0) continue;
-
-//     switch(fruit) {
-//       // Cherry
-//       case 1:
-// 	src.x = 0 * gl::SPRITE_SIZE + 0 * gl::PADDING + gl::PADDING;
-// 	break;
-//       // Strawberry
-//       case 2:
-// 	src.x = 1 * gl::SPRITE_SIZE + 1 * gl::PADDING + gl::PADDING;
-// 	break;
-//       // Peach
-//       case 3:
-//       case 4:
-// 	src.x = 2 * gl::SPRITE_SIZE + 2 * gl::PADDING + gl::PADDING;
-// 	break;
-//       // Apple
-//       case 5:
-//       case 6:
-// 	src.x = 3 * gl::SPRITE_SIZE + 3 * gl::PADDING + gl::PADDING;
-// 	break;
-//       // Grapes
-//       case 7:
-//       case 8:
-// 	src.x = 4 * gl::SPRITE_SIZE + 4 * gl::PADDING + gl::PADDING;
-// 	break;
-//       // Galaxian
-//       case 9:
-//       case 10:
-// 	src.x = 5 * gl::SPRITE_SIZE + 5 * gl::PADDING + gl::PADDING;
-// 	break;
-//       // Bells
-//       case 11:
-//       case 12:
-// 	src.x = 6 * gl::SPRITE_SIZE + 6 * gl::PADDING + gl::PADDING;
-// 	break;
-//       // Keys
-//       default:
-// 	src.x = 7 * gl::SPRITE_SIZE + 7 * gl::PADDING + gl::PADDING;
-// 	break;
-//     }
-
-//     Rectangle dest = {
-//       (float)(gl::MAZE_WIDTH * gl::TILE_SCALED - (2 * gl::TEXT_SIZE + 2 * idx * gl::TEXT_SIZE) - gl::TEXT_SIZE),
-//       (gl::MAZE_HEIGHT + gl::TOP_UI_SIZE) * gl::TILE_SCALED,
-//       gl::SPRITE_SIZE_SCALED,
-//       gl::SPRITE_SIZE_SCALED,
-//     };
-
-//     rl::draw_texture_pro(*self.atlas_ptr, src, dest, (float[<2>]){0, 0}, 0, (Color){255, 255, 255, 255});
-//   }
-// }
 
 fn void GameUI.free(&self) {
   ui::save_high_score(self.high_score);

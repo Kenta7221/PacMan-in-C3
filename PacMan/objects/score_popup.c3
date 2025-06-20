@@ -112,7 +112,7 @@ fn bool ScorePopup.can_drawn(&self) @inline {
 fn void ScorePopup.draw(&self) {
   rl::draw_text_ex(self.font,
 		   self.str,
-		   self.pos,
+		   (Vector2){self.pos.x, self.pos.y},
 		   gl::TEXT_SIZE,
 		   3.f,
 		   self.color

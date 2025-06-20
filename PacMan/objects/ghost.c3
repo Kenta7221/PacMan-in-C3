@@ -253,7 +253,7 @@ fn void Ghost.return_to_spawn(&self, uint level, Tile *tiles, TimeSpan dt) {
  3) Force him to go up to the pos of EXIT_Y
  4) If he leaves spawn change dir to left or right
  @param [&in] tiles : "Tiles was passed as null!"
- @param [&inout] rng_index "Rng index was passed as null!"
+ @param [&inout] rng_index : "Rng index was passed as null!"
 *>
 fn void Ghost.leave_spawn(&self, Tile *tiles, Uint16* rng_index, TimeSpan dt) {
   const CENTER_X = 13 * gl::TILE_SCALED + gl::TILE_SCALED / 2;
@@ -318,7 +318,7 @@ fn void Ghost.leave_spawn(&self, Tile *tiles, Uint16* rng_index, TimeSpan dt) {
 
 <*
  @param [&in] tiles : "Tiles was passed as null!"
- @param [&inout] rng_index "Rng index was passed as null!"
+ @param [&inout] rng_index : "Rng index was passed as null!"
 *>
 fn void Ghost.move(&self, Tile *tiles, Int16[<2>] pacman_pos, uint level, Uint8 global_state, Uint16* rng_index, TimeSpan dt) {
   defer {
@@ -463,9 +463,9 @@ fn void Ghost.draw(&self) {
   rl::draw_texture_pro(*self.animation.atlas_ptr,
 		       self.animation.uv_rect,
 		       dest,
-		       (float[<2>]){0, 0},
+		       {0, 0},
 		       0,
-		       (Color){255, 255, 255, 255});
+		       {255, 255, 255, 255});
 }
 
 //===========================================================================================

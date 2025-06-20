@@ -442,12 +442,12 @@ fn void draw_ready_player_text(Font *font, TimeSpan pause) {
   rl::draw_text_ex(*font,
 		   "Ready!",
 		   {
-		     12 * gl::TEXT_SIZE,
+		     12 * gl::TEXT_SIZE - gl::TEXT_SIZE / 8,
 		     20 * gl::TEXT_SIZE
 		   },
 		   gl::TEXT_SIZE,
 		   0.f,
-		   (Color){255, 255, 0, 255}
+		   {255, 255, 0, 255}
   );
 
   if(pause < 1.f) {
@@ -459,8 +459,7 @@ fn void draw_ready_player_text(Font *font, TimeSpan pause) {
 		     },
 		     gl::TEXT_SIZE,
 		     0.f,
-
-		     (Color){0, 255, 255, 255}
+		     {0, 255, 255, 255}
     );
   }
 }

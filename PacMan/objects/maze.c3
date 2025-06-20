@@ -104,7 +104,7 @@ fn void Maze.draw(&self, bool finished_level = false, bool blinking_energizer = 
       gl::TILE_SCALED
     };
             
-    rl::draw_texture_pro(self.texture, src, dest, (float[<2>]){0, 0}, 0, (Color){255, 255, 255, 255});
+    rl::draw_texture_pro(self.texture, src, dest, {0, 0}, 0, {255, 255, 255, 255});
   }
 
   if(blinks >= 20) {
