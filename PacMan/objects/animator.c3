@@ -3,6 +3,17 @@ module animator;
 import rl;
 import gl;
 
+/*
+
+Index of this module:
+// Struct, interface, constand values and methods definitions
+
+*/
+
+//------------------------------------------------------------------------------------
+// Struct, interface, constand values and methods definitions
+//------------------------------------------------------------------------------------
+
 const FLIP_HORIZONTALLY = 0x0F;
 const FLIP_VERTICALLY   = 0xF0;
 

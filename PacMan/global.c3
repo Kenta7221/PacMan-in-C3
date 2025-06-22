@@ -2,6 +2,21 @@ module gl;
 
 import rl;
 
+import main;
+
+
+/*
+
+Index of this module:
+// Aliases, const values, enums definitions
+// Global functions and macro
+
+*/
+
+//------------------------------------------------------------------------------------
+// Aliases, const values, enums definitions
+//------------------------------------------------------------------------------------
+
 alias Uint16 = ushort;
 alias Uint8 = char;
 alias Int16  = short;
@@ -9,7 +24,8 @@ alias Int8 = ichar;
 
 alias TimeSpan = float;
 
-const SCALE = 4;
+// Actual scale used everywhere
+const SCALE = main::SCREEN_SCALE;
 const TILE_SIZE = 8;
 const TILE_SCALED = SCALE * TILE_SIZE;
 
@@ -26,8 +42,6 @@ const SPRITE_SIZE = 2 * gl::TILE_SIZE;
 const SPRITE_SIZE_SCALED = 2 * gl::TILE_SIZE * SCALE;
 const PADDING = 1;
 
-const BASE_SPEED = 0.18f; // 100%
-
 enum EventType : (inline Uint8 type) {
   NONE           = 0,
   SCORE_INCREASE = 0x01 << 1,
@@ -43,6 +57,17 @@ enum Direction : Uint8 (inline Uint8 type){
   LEFT		= 0x01 << 1,
   DOWN	        = 0x01 << 2,
   RIGHT		= 0x01 << 3,
+}
+
+
+//------------------------------------------------------------------------------------
+// Global functions and macro
+//------------------------------------------------------------------------------------
+
+macro check_scale($scale) {
+  $if $scale >= 120:
+    $error("Invalid scale value: exceeds range of 'short' type.");
+  $endif  
 }
 
 fn Int16[<2>] tween_pos_by_tiles(Int16[<2>] s, Int16[<2>] e, float t) {

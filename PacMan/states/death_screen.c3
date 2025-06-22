@@ -8,6 +8,17 @@ import gl;
 import maze;
 import timer;
 
+/*
+
+Index of this module:
+// Struct and methods definitions
+
+*/
+
+//------------------------------------------------------------------------------------
+// Struct and methods definitions
+//------------------------------------------------------------------------------------
+
 struct DeathScreen {
   Font font;
   Maze maze;

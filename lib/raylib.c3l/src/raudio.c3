@@ -66,6 +66,8 @@ extern fn void pause_music_stream(Music music) @extern("PauseMusicStream");
 
 extern fn void resume_music_stream(Music music) @extern("ResumeMusicStream");
 
+extern fn void seek_music_stream(Music music, float position) @extern("SeekMusicStream");
+
 extern fn bool is_music_stream_playing(Music music) @extern("IsMusicStreamPlaying");
 
 extern fn void update_music_stream(Music music) @extern("UpdateMusicStream");

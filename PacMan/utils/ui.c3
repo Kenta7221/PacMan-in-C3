@@ -3,10 +3,22 @@ module ui;
 import gl;
 import rl;
 
-import hack;
+import file_loader;
 
 import libc;
 import std::io;
+
+/*
+
+Index of this module:
+// Struct and methods definitions
+// Helper functions
+
+*/
+
+//------------------------------------------------------------------------------------
+// Struct and methods definitions
+//------------------------------------------------------------------------------------
 
 struct GameUI {
   Font font;
@@ -28,13 +40,13 @@ fn void? GameUI.init(&self) {
   
   self.font = rl::load_font_ex(FONT_DIR, gl::FONT_BASE_SIZE, null, 0);
   if(!rl::is_font_valid(self.font)) {
-    io::printn("Font for ui was not loaded!");
+    io::eprintn("Font for ui was not loaded!");
     return io::FILE_NOT_FOUND?;
   }
 
   self.texture = rl::load_texture(ATLAS_FILENAME);
   if(!rl::is_texture_valid(self.texture)) {
-    io::printn("Fruits texture was not loaded!");
+    io::eprintn("Fruits texture was not loaded!");
     return io::FILE_NOT_FOUND?;
   }
 
@@ -221,11 +233,15 @@ fn void GameUI.free(&self) {
   rl::unload_texture(self.texture);
 }
 
+//------------------------------------------------------------------------------------
+// Helper functions
+//------------------------------------------------------------------------------------
+
 <*
  @param [&out] high_score : "High Score passed as null!"
 *>
 fn void load_high_score(uint *high_score) @inline @private {
-  String temp = hack::HIGHEST_SCORE;
+  String temp = file_loader::HIGHEST_SCORE;
   *high_score = temp.to_uint()!!;
 }
 

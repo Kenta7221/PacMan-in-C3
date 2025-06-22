@@ -7,14 +7,20 @@ import libc;
 import gl;
 import rl;
 
-// This is the funniest and stupidest idea i have come up with. Basically in C3 the $embed(...) 
-// function includes the contents of a file into the compilation as a constant array of bytes.
-// HOWEVER the problem arrises when you try to load the file from the other path... which is
-// impossible to do. That's why I created the seperated .c3 file located in resources folder
-// which his whole purpose is too load a binary file at compile time.
-import hack;
-
+import file_loader;
 import pacman;
+
+/*
+
+Index of this module:
+// Struct, enums and methods definitions
+// Helper functions
+
+*/
+
+//------------------------------------------------------------------------------------
+// Struct, enums and methods definitions
+//------------------------------------------------------------------------------------
 
 enum TileType : uint (Uint16 points) {
   BLANK		= 0,
@@ -78,7 +84,7 @@ fn EventType Maze.update(&self, PacMan *pacman) {
 }
 
 fn void Maze.draw(&self, bool finished_level = false, bool blinking_energizer = false) {
-  static Uint8 blinks = 0;
+  static Uint16 blinks = 0;
   static bool is_white = false;
   static bool blank_energizer = false;
 
@@ -86,7 +92,7 @@ fn void Maze.draw(&self, bool finished_level = false, bool blinking_energizer = 
   if(!finished_level && is_white) is_white = false;
   
   for(int i = 0; i < gl::MAZE_WIDTH * gl::MAZE_HEIGHT; i++) {
-    if(finished_level && blinks >= 20) change_tile_around(&self.tiles[i], is_white);
+    if(finished_level && blinks >= 350) change_tile_around(&self.tiles[i], is_white);
 
     if(blinking_energizer && blank_energizer && self.tiles[i].type == TileType.ENERGIZER) continue;
     
@@ -107,7 +113,7 @@ fn void Maze.draw(&self, bool finished_level = false, bool blinking_energizer = 
     rl::draw_texture_pro(self.texture, src, dest, {0, 0}, 0, {255, 255, 255, 255});
   }
 
-  if(blinks >= 20) {
+  if(blinks >= 350) {
     if(finished_level) is_white = !is_white;    
     if(blinking_energizer) blank_energizer = !blank_energizer;
     
@@ -119,9 +125,9 @@ fn void Maze.free(&self) {
   rl::unload_texture(self.texture);
 }
 
-//===========================================================================================
+//------------------------------------------------------------------------------------
 // Helper functions
-//============================================================================================
+//------------------------------------------------------------------------------------
 
 fn maze::Tile get_tile_at(Tile *tiles, Int16[<2>] pos) {
   int[<2>] tile = {
@@ -133,8 +139,8 @@ fn maze::Tile get_tile_at(Tile *tiles, Int16[<2>] pos) {
 }
 
 fn void create_tilemap(Tile* tiles) @private {
-  for(int i = 1; i < hack::MAZE_DATA.len; i += 2) {
-    Uint8[] slice = hack::MAZE_DATA[i - 1 .. i];
+  for(int i = 1; i < file_loader::MAZE_DATA.len; i += 2) {
+    Uint8[] slice = file_loader::MAZE_DATA[i - 1 .. i];
     Uint8 num =  (slice[0] - '0') * 10 + slice[1] - '0';
 
     switch(num) {

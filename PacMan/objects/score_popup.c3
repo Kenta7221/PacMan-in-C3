@@ -6,34 +6,17 @@ import libc;
 import rl;
 import gl;
 
-<*
- @param [inout] score_popup
-*>
-fn void handler(ScorePopup **score_popup,
-			   Uint16[<2>] pos,
-			   Uint8 ghost_eaten,
-			   Uint16 fruit_points,
-			   PopupState state,
-			   EventType event) {
-  switch(state) {
-    case INIT:
-      if((*score_popup) != null) nextcase UPDATE;
-      *score_popup = (ScorePopup*)mem::new(ScorePopup);
-      (*score_popup).init(event, pos, ghost_eaten, fruit_points)!!;
-      break;
-    case UPDATE:
-      (*score_popup).update(event, pos, ghost_eaten, fruit_points);
-      break;
-    case DESTROY:
-      if(score_popup == null) break;
-      
-      rl::unload_font((*score_popup).font);
-      free((*score_popup));
-      (*score_popup) = null;
-    default:
-      break;
-  }
-}
+/*
+
+Index of this module:
+// Struct and methods definitions
+// Helper function
+
+*/
+
+//------------------------------------------------------------------------------------
+// Struct, enum and methods definitions
+//------------------------------------------------------------------------------------
 
 enum PopupState : inline Uint8 {
   NONE,
@@ -121,4 +104,38 @@ fn void ScorePopup.draw(&self) {
 
 fn void ScorePopup.free(&self) {
   rl::unload_font(self.font);
+}
+
+
+//------------------------------------------------------------------------------------
+// Helper function
+//------------------------------------------------------------------------------------
+
+<*
+ @param [inout] score_popup
+*>
+fn void handler(ScorePopup **score_popup,
+			   Uint16[<2>] pos,
+			   Uint8 ghost_eaten,
+			   Uint16 fruit_points,
+			   PopupState state,
+			   EventType event) {
+  switch(state) {
+    case INIT:
+      if((*score_popup) != null) nextcase UPDATE;
+      *score_popup = (ScorePopup*)mem::new(ScorePopup);
+      (*score_popup).init(event, pos, ghost_eaten, fruit_points)!!;
+      break;
+    case UPDATE:
+      (*score_popup).update(event, pos, ghost_eaten, fruit_points);
+      break;
+    case DESTROY:
+      if(score_popup == null) break;
+      
+      rl::unload_font((*score_popup).font);
+      free((*score_popup));
+      (*score_popup) = null;
+    default:
+      break;
+  }
 }

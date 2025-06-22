@@ -98,7 +98,7 @@ fn void TitleScreen.update(&self, GameState *state, TimeSpan dt) {
   foreach(&ghost : self.ghosts) { ghost.update_animation(dt); }
 }
 fn void TitleScreen.draw(&self) {
-  static Uint8 blinks = 0;
+  static Uint16 blinks = 0;
   static bool flash = true;
 
   blinks += 1;
@@ -133,8 +133,8 @@ fn void TitleScreen.draw(&self) {
 		   0.f,
 		   {255, 185, 255, 255}
   );
-
-  if(blinks >= 32) {
+  
+  if(blinks >= 750) {
     blinks = 0;
     flash = !flash;
   }

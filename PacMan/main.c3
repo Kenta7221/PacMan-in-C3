@@ -1,15 +1,20 @@
+module main;
+
 import std::io;
 
 import gl;
 import rl;
 import game_ctx;
 
+const SCREEN_SCALE = 4;
+
 fn void main() {
-  const WIDTH  = gl::SCALE * gl::TILE_SIZE * gl::MAZE_WIDTH;
-  const HEIGHT = gl::SCALE * gl::TILE_SIZE * (gl::MAZE_HEIGHT + gl::TOP_UI_SIZE + gl::BOTTOM_UI_SIZE);
-  
-  rl::init_window(WIDTH, HEIGHT, "PacMan with C3");
-  rl::set_target_fps(60); // TODO
+  gl::check_scale(SCREEN_SCALE);
+  const WIDTH  = SCREEN_SCALE * gl::TILE_SIZE * gl::MAZE_WIDTH;
+  const HEIGHT = SCREEN_SCALE * gl::TILE_SIZE * (gl::MAZE_HEIGHT + gl::TOP_UI_SIZE + gl::BOTTOM_UI_SIZE);
+
+  rl::set_trace_log_level(TraceLogLevel.LOG_NONE);
+  rl::init_window(WIDTH, HEIGHT, "PacMan in C3");
 
   rl::init_audio_device();
   

@@ -5,6 +5,18 @@ import std::io;
 import gl;
 import rl;
 
+/*
+
+Index of this module:
+// Struct and methods definitions
+// Helper function
+
+*/
+
+//------------------------------------------------------------------------------------
+// Struct and methods definitions
+//------------------------------------------------------------------------------------
+
 struct Fruit {
   Uint16[<2>] pos;
   
@@ -21,7 +33,7 @@ fn void? Fruit.init(&self, uint level) {
   
   self.texture = rl::load_texture(ATLAS_FILENAME);
   if(!rl::is_texture_valid(self.texture)) {
-    io::printn("Fruit texture was not loaded!");
+    io::eprintn("Fruit texture was not loaded!");
     return io::FILE_NOT_FOUND?;
   }
 
@@ -127,12 +139,16 @@ fn void Fruit.free(&self) {
   rl::unload_texture(self.texture);
 }
 
+//------------------------------------------------------------------------------------
+// Helper function
+//------------------------------------------------------------------------------------
+
 <*
  Set the uv coord and the amount of points for fruit
  @param [&inout] uv : "Uv passed as null!"
  @param [&out] points : "Points passed as null!"
 *>
-fn void set_which_fruit(Uint8[<2>] *uv, Uint16 *points, uint level) {
+fn void set_which_fruit(Uint8[<2>] *uv, Uint16 *points, uint level) @private {
   uv.y = 1;
 
   switch(level) {

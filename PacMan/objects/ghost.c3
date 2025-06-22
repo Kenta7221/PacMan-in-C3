@@ -11,6 +11,19 @@ import maze;
 import pacman;
 import game_ctx::gameplay;
 
+/*
+
+Index of this module:
+// Struct, enums, constant values and methods definitions
+// Helper functions
+// Callback functions
+
+*/
+
+//------------------------------------------------------------------------------------
+// Struct, enums, constant values and methods definitions
+//------------------------------------------------------------------------------------
+
 const SPAWN_SPEED @private = 2.f;
 
 enum GhostType : inline Uint8 {
@@ -64,7 +77,7 @@ fn void Ghost.init(&self, Uint8 ghost_type = 0, Texture2D *ghost_atlas) {
     {  25 * gl::TILE_SCALED                        , 0 }, // Blinky
     {  2 * gl::TILE_SCALED                         , 0 }, // Pinky
     { (gl::MAZE_WIDTH - 1) * gl::TILE_SCALED       , (gl::TOP_UI_SIZE + gl::MAZE_HEIGHT) * gl::TILE_SCALED  }, // Inky
-    {  0                                            , (gl::TOP_UI_SIZE + gl::MAZE_HEIGHT) * gl::TILE_SCALED  }, // Clyde
+    {  0                                           , (gl::TOP_UI_SIZE + gl::MAZE_HEIGHT) * gl::TILE_SCALED  }, // Clyde
   };
 
   const TargetCallback[4] CALLBACK = { &blinky_target, &pinky_target, &inky_target, &clyde_target };
@@ -100,6 +113,7 @@ fn void Ghost.set_at_start_pos(&self) {
   self.state_flags = 0;
   if(self.ghost_type != GhostType.BLINKY) self.state_flags |= GhostState.IN_SPAWN;
 
+  // To update every ghost at the beginning
   self.update_animation(dt: 0);
 }
 
@@ -109,7 +123,6 @@ fn bool Ghost.collision(&self, Int16[<2>] pacman_pos) {
 
   return ghost_tile == pacman_tile;
 }
-
 
 fn void Ghost.turn_180(&self) {
   Uint8 potential_dir = Direction.NONE;
@@ -195,7 +208,7 @@ fn void Ghost.return_to_spawn(&self, uint level, Tile *tiles, TimeSpan dt) {
       }
     
       if(gl::in_tunnel((Int8[<2>])(self.pos / gl::TILE_SCALED))) {
-	self.state_flags |= GhostState.IN_TUNNEL;    
+	self.state_flags |= GhostState.IN_TUNNEL;
 	gl::handle_tunnel_wrap(&self.pos);
       } else if(self.state_flags & GhostState.IN_TUNNEL) { // Disable being in a tunnel
 	self.state_flags ^= GhostState.IN_TUNNEL;
@@ -329,8 +342,9 @@ fn void Ghost.move(&self, Tile *tiles, Int16[<2>] pacman_pos, uint level, Uint8 
     
     self.pos = gl::tween_pos_by_dir(self.pos, self.dir, self.lerp_amount);
   }
-  
-  if(!gl::is_aligned(self.pos) && self.dir != Direction.NONE) return;
+
+  //  && self.dir != Direction.NONE idk why it was here
+  if(!gl::is_aligned(self.pos)) return;
 
   if(gl::in_tunnel((Int8[<2>])(self.pos / gl::TILE_SCALED))) {
     self.state_flags |= GhostState.IN_TUNNEL;    
@@ -338,7 +352,7 @@ fn void Ghost.move(&self, Tile *tiles, Int16[<2>] pacman_pos, uint level, Uint8 
     return;
   }
 
-  // Disable being in a tunnel
+  // Disable being in a tunnel because we passed if in tunnel
   if(self.state_flags & GhostState.IN_TUNNEL) self.state_flags ^= GhostState.IN_TUNNEL;
   
   if(self.state_flags & GhostState.FRIGHTEN) {
@@ -468,9 +482,9 @@ fn void Ghost.draw(&self) {
 		       {255, 255, 255, 255});
 }
 
-//===========================================================================================
+//------------------------------------------------------------------------------------
 // Helper functions
-//============================================================================================
+//------------------------------------------------------------------------------------
 
 fn Uint16 sqrt_dist(Int16[<2>] a, Int16[<2>] b) @private {
   Uint16 dx = a.x - b.x;
@@ -482,7 +496,7 @@ fn bool activate_elroy(uint level, Uint8 eaten_dots) {
   Uint8 activation = 0;
 
   switch {
-    case level == 1 : activation = 20;  break;
+    case level == 1 : activation = 200;  break;
     case level == 2 : activation = 30;  break;
     case level <= 5 : activation = 40;  break;
     case level <= 8 : activation = 50;  break;
@@ -665,9 +679,9 @@ fn Uint8 get_rnd_dir(Int16[<2>] *pos, Uint8 *dir, Tile *tiles, Uint16 rng_index)
   return *dir;
 }
 
-//===========================================================================================
+//------------------------------------------------------------------------------------
 // Callback functions
-//============================================================================================
+//------------------------------------------------------------------------------------
 
 <*
  @param [&in] pacman

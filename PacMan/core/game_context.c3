@@ -7,6 +7,17 @@ import rl;
 
 import timer;
 
+/*
+
+Index of this module:
+// Struct, enums and methods definitions
+
+*/
+
+//------------------------------------------------------------------------------------
+// Struct, enums and methods definitions
+//------------------------------------------------------------------------------------
+
 enum GameState {
   TITLE_SCREEN,
   GAMEPLAY,

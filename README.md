@@ -2,9 +2,9 @@
 This project is a **partial recreation of the classic PacMan arcade game**, written in the [C3 programming language](https://c3-lang.org/) and using [Raylib](https://www.raylib.com/) as a graphic API. While it has all core mechanics **some features are currently missing or incomplete**
 ## Screenshots
 <p align="center">
-  <img src="assets/screen_shots/title_screen.png" width="50%" height="50%" alt="Title Screen">
-  <img src="assets/screen_shots/start_level.png" width="50%" height="50%" alt="Start Level">
-  <img src="assets/screen_shots/gameplay.png" width="50%" height="50%" alt="Gameplay">
+  <img src="screenshots/title-screen.png" width="50%" height="50%" alt="Title Screen">
+  <img src="screenshots/start-level.png" width="50%" height="50%" alt="Start Level">
+  <img src="screenshots/gameplay.png" width="50%" height="50%" alt="Gameplay">
 </p>
 
 ---
@@ -36,6 +36,8 @@ const SCALE = 4;
 - Press the **left arrow key** to **decrease** the volume and the **right arrow key** to **increase** it
 ## Missing features
 - Frighten ghost **blink** continuously instead of only when the timer is almost over
+- **Pac-Ma**n becomes **unresponsive (can’t turn or react)** after a **ghost dies**
+- **Ghost music** lacking proper **update functionality**
 ## License
 This project is licensed under the [MIT License](LICENSE.md)
 ## Acknowledgments

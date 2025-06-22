@@ -104,7 +104,7 @@ fn void Gameplay.reset_level(&self) {
   self.pause = 0.f;
 
   self.timer.reset();
-  self.audio_manager.update_ghost_music(0, audio_manager::MusicType.NONE);
+  self.audio_manager.update_ghost_music(0, GhostMusicType.NONE);
   
   if(self.score_popup != null) score_popup::handler(&self.score_popup, {0, 0}, 0, 0, PopupState.DESTROY, EventType.FRUIT_EATEN);
   if(self.fruit != null) {
@@ -234,13 +234,8 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
     self.timer.which_cycle++;
 
     if(self.timer.which_cycle % 2 == 0) {
-      self.audio_manager.update_ghost_music(0, audio_manager::MusicType.values[self.timer.which_cycle + 1]);
-    }
-    
-    io::print("New cycle: ");
-    self.flags & GameplayState.CHASE_MODE
-      ? io::printn("Chase Mode")
-      : io::printn("Scatter Mode");
+      self.audio_manager.update_ghost_music(0, GhostMusicType.values[self.timer.which_cycle + 1]);
+    }    
   }
  
   if(self.timer.end_frighten_mode(dt, (bool)(self.flags & GameplayState.FRIGHTEN_MODE))) {
@@ -250,8 +245,7 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
     self.eaten_ghosts = 0;
     foreach(&ghost : self.ghosts) { ghost.state_flags &= (Uint8)~GhostState.FRIGHTEN.state; }
 
-    self.audio_manager.update_ghost_music(0, audio_manager::MusicType.values[self.timer.which_cycle + 1]);
-    io::printn("Frighten Mode disabled");
+    self.audio_manager.update_ghost_music(0, GhostMusicType.values[self.timer.which_cycle + 1]);
   }
 
   // 2. PacMan interaction
@@ -264,7 +258,7 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
     self.eaten_dots++;
     self.ui.score += 50;
     self.flags |= GameplayState.FRIGHTEN_MODE;
-    self.audio_manager.update_ghost_music(self.flags, audio_manager::MusicType.values[self.timer.which_cycle + 1]);
+    self.audio_manager.update_ghost_music(self.flags, GhostMusicType.values[self.timer.which_cycle + 1]);
     
     // All ghosts turn 180 degrees upon the begging of the frighten mode
     foreach(&ghost : self.ghosts) {
@@ -273,8 +267,6 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
 	ghost.turn_180();
       }
     }
-
-    io::printn("Frighten Mode enabled");
   }
 
   fruit_handler(&self.fruit, &self.score_popup, self, dt);
@@ -283,13 +275,28 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
     dot_eaten = true;
     self.eaten_dots++;
     self.ui.score += 10;
-    self.audio_manager.update_sound(self.flags, dot_eaten: true, fruit_eaten: false);
+    self.audio_manager.update_sound(self.flags, fruit_eaten: false);
     
     if(self.flags & GameplayState.USE_GLOBAL_COUNTER) { self.global_ghosts_dot_counter++; }
   }
 
+  self.audio_manager.update_pacman_music(dot_eaten, dt);
+
+  if(self.audio_manager.go_home_playing) {
+    bool stop_music = true;
+    foreach(&ghost : self.ghosts) {
+      if(ghost.state_flags & GhostState.DEAD || ghost.state_flags & GhostState.ENTERING_SPAWN) { stop_music = false; break; }
+    }
+
+    if(stop_music) {
+      self.audio_manager.update_ghost_music(self.flags, GhostMusicType.values[self.timer.which_cycle + 1]);
+      self.audio_manager.go_home_playing = false;
+    }
+  }
+
   // Checking this out of loop because only blinky can become elroy
-  if(ghost::activate_elroy(self.timer.level, self.eaten_dots)) {
+  if(ghost::activate_elroy(self.timer.level, self.eaten_dots) &&
+  !(self.ghosts[GhostType.BLINKY].state_flags & GhostState.ELROY)) {
     self.ghosts[GhostType.BLINKY].state_flags |= GhostState.ELROY;
   }
   
@@ -304,14 +311,16 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
       if(ghost.state_flags & GhostState.DEAD) {
 	self.flags |= GameplayState.GHOST_EATEN;
 	self.eaten_ghosts += 1;
-	self.audio_manager.update_sound(self.flags, dot_eaten: false, fruit_eaten: false);
+	self.audio_manager.update_sound(self.flags, fruit_eaten: false);
+	self.audio_manager.update_ghost_music(0, GhostMusicType.GO_HOME);
+	self.audio_manager.go_home_playing = true;
 	score_popup::handler(&self.score_popup, ghost.pos, self.eaten_ghosts, 0, PopupState.INIT, EventType.GHOST_EATEN);
 	continue;
       }
       
       self.pacman.state_flags |= PacManState.DEAD;
       self.flags |= GameplayState.RESET_LEVEL;
-      self.audio_manager.update_sound(self.flags, dot_eaten: false, fruit_eaten: false);
+      self.audio_manager.update_sound(self.flags, fruit_eaten: false);
       return;
     }    
   }
@@ -319,8 +328,7 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
 
 fn void Gameplay.draw(&self) {
   if(self.flags & GameplayState.START_LEVEL) {
-    self.maze.draw();
-    
+    self.maze.draw();    
     draw_ready_player_text(&self.ui.font, self.pause);
       
     if(self.pause > 1.f) {
@@ -338,7 +346,6 @@ fn void Gameplay.draw(&self) {
 
     foreach(i, &ghost : self.ghosts) self.ghosts[i].draw();
     self.pacman.draw();
-
     self.ui.draw(&self.pacman.texture, self.pacman.lives);
       
     if(self.score_popup == null) return;
@@ -388,8 +395,7 @@ fn void Gameplay.draw(&self) {
       
   foreach(i, &ghost : self.ghosts) self.ghosts[i].draw();
       
-  self.pacman.draw();
-      
+  self.pacman.draw();      
   self.ui.draw(&self.pacman.texture, self.pacman.lives);
       
   if(self.score_popup == null) return;
@@ -423,7 +429,6 @@ fn void Gameplay.free(&self) {
 *>
 fn void fruit_handler(Fruit **fruit, ScorePopup **score_popup, Gameplay *ctx, TimeSpan dt) {
   if((ctx.eaten_dots == 70 || ctx.eaten_dots == 170) && (*fruit) == null) {
-    io::printn("Fruit appeared");
     *fruit = mem::new(Fruit);
     (*fruit).init(ctx.timer.level)!!;
   }
@@ -432,8 +437,6 @@ fn void fruit_handler(Fruit **fruit, ScorePopup **score_popup, Gameplay *ctx, Ti
     (*fruit).elapsed_time += dt;
 
     if((*fruit).elapsed_time > 9.5f) {
-      io::printn("Fruit dissapeared");
-      
       rl::unload_texture((*fruit).texture);
       free((*fruit));
       (*fruit) = null;
@@ -442,7 +445,7 @@ fn void fruit_handler(Fruit **fruit, ScorePopup **score_popup, Gameplay *ctx, Ti
 
     if((*fruit).collision(ctx.pacman.pos)) {
       score_popup::handler(score_popup, (*fruit).pos, 0, (*fruit).points, PopupState.INIT, EventType.FRUIT_EATEN);
-      ctx.audio_manager.update_sound(ctx.flags, dot_eaten: false, fruit_eaten: true);
+      ctx.audio_manager.update_sound(ctx.flags, fruit_eaten: true);
       
       ctx.ui.score += (*fruit).points;
 

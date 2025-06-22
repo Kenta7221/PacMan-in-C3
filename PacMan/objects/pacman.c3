@@ -8,6 +8,19 @@ import rl;
 import animator;
 import maze;
 
+
+/*
+
+Index of this module:
+// Struct, enums, constant values and methods definitions
+// Helper functions
+
+*/
+
+//------------------------------------------------------------------------------------
+// Struct, enums, constant values and methods definitions
+//------------------------------------------------------------------------------------
+
 const CURR_DIR_MASK @private = 0x0F;
 const TURN_DIR_MASK @private = 0xF0;
 
@@ -40,7 +53,7 @@ fn void? PacMan.init(&self) {
 
   self.texture = rl::load_texture(ATLAS_FILENAME);
   if(!rl::is_texture_valid(self.texture)) {
-    io::printn("PacMan texture was not loaded!");
+    io::eprintn("PacMan texture was not loaded!");
     return io::FILE_NOT_FOUND?;
   }
  
@@ -179,9 +192,9 @@ fn void PacMan.draw(&self) {
   );
 }
 
-//===========================================================================================
+//------------------------------------------------------------------------------------
 // Helper functions
-//============================================================================================
+//------------------------------------------------------------------------------------
 
 fn float get_speed(uint level) @private {
   if(level == 1) return 9.6f; // 80%

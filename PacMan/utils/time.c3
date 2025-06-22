@@ -4,6 +4,19 @@ import std::io;
 
 import gl;
 
+
+/*
+
+Index of this module:
+// Struct, const value and methods definitions
+// Helper functions
+
+*/
+
+//------------------------------------------------------------------------------------
+// Struct, const value and methods definitions
+//------------------------------------------------------------------------------------
+
 const TimeSpan INDEFINITE @private = TimeSpan.max / 2;
 
 struct Timer {
@@ -34,11 +47,8 @@ fn void Timer.reset(&self) {
   self.dot_not_eaten = 0.f;
 }
 
-fn void Timer.update(&self, TimeSpan new_time) {
-  const TimeSpan CLAMP_TIME = TimeSpan.max / 4;
 
-  if(self.elapsed_time > CLAMP_TIME) self.elapsed_time = CLAMP_TIME;
-  
+fn void Timer.update(&self, TimeSpan new_time) {  
   self.elapsed_time = new_time;
 }
 
@@ -81,6 +91,9 @@ fn bool Timer.new_cycle(&self, TimeSpan dt) {
   return self.cycle > duration;
 }
 
+//------------------------------------------------------------------------------------
+// Helper functions
+//------------------------------------------------------------------------------------
 
 <*
  @require level > 0 : "ERROR: level val is out of bounds!"
