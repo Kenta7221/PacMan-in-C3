@@ -37,8 +37,7 @@ fn void Timer.reset(&self) {
 fn void Timer.update(&self, TimeSpan new_time) {
   const TimeSpan CLAMP_TIME = TimeSpan.max / 4;
 
-  // TODO: Make this good this time beacuse this will fuck everythink
-  if(self.elapsed_time > CLAMP_TIME) self.elapsed_time = 0.f;
+  if(self.elapsed_time > CLAMP_TIME) self.elapsed_time = CLAMP_TIME;
   
   self.elapsed_time = new_time;
 }
@@ -63,9 +62,9 @@ fn bool Timer.exceeds_dot_not_eaten_dur(&self, TimeSpan dt, bool dot_eaten) {
 fn bool Timer.end_frighten_mode(&self, TimeSpan dt, bool frighten_mode) {  
   if(!frighten_mode) return false;
 
-  // Immedietly end chase mode
   TimeSpan duration = get_frighten_mode_dur(self.level);
   
+  // Immedietly end chase mode
   if(duration == INDEFINITE) return true;
   
   self.frighten_mode += dt;

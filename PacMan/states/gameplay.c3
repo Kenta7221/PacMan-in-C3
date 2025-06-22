@@ -5,15 +5,26 @@ import std::io;
 import gl;
 import rl;
 
-import timer;
-
-import ui;
-
 import maze;
 import pacman;
 import ghost;
 import fruit;
+import ui;
+import timer;
+import audio_manager;
 import score_popup;
+
+/*
+
+Index of this module:
+// Struct, enum and methods definitions
+// Helper functions
+
+*/
+
+//------------------------------------------------------------------------------------
+// Struct, enum and methods definitions
+//------------------------------------------------------------------------------------
 
 enum GameplayState : Uint8 (inline Uint8 state) {
   START_LEVEL         = 1 << 0,
@@ -27,9 +38,11 @@ enum GameplayState : Uint8 (inline Uint8 state) {
 
 struct Gameplay {
   Texture2D ghost_atlas;
+  AudioManager audio_manager;
+  Music[2] musics;  // Pacman, Ghost speed
+  Sound* sound; // Ghost, fruit eaten and death sfx 
   
-  Uint8 flags;
-  
+  Uint8 flags; // Game play states
   Uint8 eaten_dots;
   Uint8 eaten_ghosts;
   Uint8 global_ghosts_dot_counter;
@@ -47,14 +60,18 @@ struct Gameplay {
 }
 
 fn void? Gameplay.init(&self) {
-  const String GHOST_ATLAS_DIR = "assets/textures/ghosts.png";
+  const GHOST_ATLAS = "assets/textures/ghosts.png";
   
-  self.ghost_atlas = rl::load_texture(GHOST_ATLAS_DIR);
+  self.ghost_atlas = rl::load_texture(GHOST_ATLAS);
   if(!rl::is_texture_valid(self.ghost_atlas)) {
-    io::printn("Ghost atlas has not been loaded!");
+    io::eprintn("Ghost atlas has not been loaded!");
     return io::FILE_NOT_FOUND?;
   }
 
+  self.audio_manager.init()!;
+    
+  self.sound = null;
+  
   self.flags |= GameplayState.START_LEVEL;
   self.eaten_dots = 0;
   self.eaten_ghosts = 0;
@@ -87,6 +104,7 @@ fn void Gameplay.reset_level(&self) {
   self.pause = 0.f;
 
   self.timer.reset();
+  self.audio_manager.update_ghost_music(0, audio_manager::MusicType.NONE);
   
   if(self.score_popup != null) score_popup::handler(&self.score_popup, {0, 0}, 0, 0, PopupState.DESTROY, EventType.FRUIT_EATEN);
   if(self.fruit != null) {
@@ -199,6 +217,7 @@ fn void Gameplay.update_state(&self, GameState *state, bool *enter_game_loop, Ti
 
 fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
   self.timer.update(new_time);
+  self.audio_manager.update();
   
   if(self.eaten_dots >= 244) {
     self.flags |= GameplayState.NEXT_LEVEL;
@@ -206,12 +225,17 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
   }
 
   if(self.score_popup != null) self.score_popup.elapsed_time += dt;
-  
+
+  // TODO: Check if the actual timer in pacman doesn't progress if there is frighten mode
   if(self.timer.new_cycle(dt) && !(self.flags & GameplayState.FRIGHTEN_MODE)) {
     self.flags ^= GameplayState.CHASE_MODE;
       
     self.timer.cycle = 0.f;
     self.timer.which_cycle++;
+
+    if(self.timer.which_cycle % 2 == 0) {
+      self.audio_manager.update_ghost_music(0, audio_manager::MusicType.values[self.timer.which_cycle + 1]);
+    }
     
     io::print("New cycle: ");
     self.flags & GameplayState.CHASE_MODE
@@ -225,7 +249,8 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
     
     self.eaten_ghosts = 0;
     foreach(&ghost : self.ghosts) { ghost.state_flags &= (Uint8)~GhostState.FRIGHTEN.state; }
-    
+
+    self.audio_manager.update_ghost_music(0, audio_manager::MusicType.values[self.timer.which_cycle + 1]);
     io::printn("Frighten Mode disabled");
   }
 
@@ -238,16 +263,17 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
     dot_eaten = true;
     self.eaten_dots++;
     self.ui.score += 50;
+    self.flags |= GameplayState.FRIGHTEN_MODE;
+    self.audio_manager.update_ghost_music(self.flags, audio_manager::MusicType.values[self.timer.which_cycle + 1]);
     
     // All ghosts turn 180 degrees upon the begging of the frighten mode
-    self.flags |= GameplayState.FRIGHTEN_MODE;
     foreach(&ghost : self.ghosts) {
       if(~ghost.state_flags & GhostState.IN_SPAWN && ~ghost.state_flags & GhostState.DEAD) {
 	ghost.state_flags |= GhostState.FRIGHTEN;
 	ghost.turn_180();
       }
     }
-    
+
     io::printn("Frighten Mode enabled");
   }
 
@@ -257,6 +283,7 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
     dot_eaten = true;
     self.eaten_dots++;
     self.ui.score += 10;
+    self.audio_manager.update_sound(self.flags, dot_eaten: true, fruit_eaten: false);
     
     if(self.flags & GameplayState.USE_GLOBAL_COUNTER) { self.global_ghosts_dot_counter++; }
   }
@@ -273,16 +300,18 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
 
     ghost.update(self, &collision, dot_eaten, dt);
 
-    if(collision) {
+    if(collision) {      
       if(ghost.state_flags & GhostState.DEAD) {
 	self.flags |= GameplayState.GHOST_EATEN;
 	self.eaten_ghosts += 1;
+	self.audio_manager.update_sound(self.flags, dot_eaten: false, fruit_eaten: false);
 	score_popup::handler(&self.score_popup, ghost.pos, self.eaten_ghosts, 0, PopupState.INIT, EventType.GHOST_EATEN);
 	continue;
       }
       
       self.pacman.state_flags |= PacManState.DEAD;
       self.flags |= GameplayState.RESET_LEVEL;
+      self.audio_manager.update_sound(self.flags, dot_eaten: false, fruit_eaten: false);
       return;
     }    
   }
@@ -373,6 +402,7 @@ fn void Gameplay.free(&self) {
   rl::unload_texture(self.ghost_atlas);
   
   self.ui.free();
+  self.audio_manager.free();
   self.maze.free();
 
   if(self.score_popup != null) score_popup::handler(&self.score_popup, {0, 0}, 0, 0, PopupState.DESTROY, EventType.NONE);
@@ -382,22 +412,9 @@ fn void Gameplay.free(&self) {
   }
 }
 
-//============================================================================================
+//------------------------------------------------------------------------------------
 // Helper functions
-//============================================================================================
-
-<*
- @param [&in] ghost : "Ghost was passed as null!"
-*>
-fn void print_ghost_stat(Ghost *ghost) {
-  io::printfn("\nFrighten mode %d", ghost.state_flags & GhostState.DEAD);
-  io::printfn("Leaving spawn %d", ghost.state_flags & GhostState.LEAVING_SPAWN);
-  io::printfn("In spawn %d", ghost.state_flags & GhostState.IN_SPAWN);
-  io::printfn("Dot counter: %d", ghost.dot_counter);
-  io::print("Pos: ");
-  io::printn(ghost.pos);
-  io::printn("");
-}
+//------------------------------------------------------------------------------------
 
 <*
  @param [inout] fruit : "Fruit was passed as null!"
@@ -425,6 +442,7 @@ fn void fruit_handler(Fruit **fruit, ScorePopup **score_popup, Gameplay *ctx, Ti
 
     if((*fruit).collision(ctx.pacman.pos)) {
       score_popup::handler(score_popup, (*fruit).pos, 0, (*fruit).points, PopupState.INIT, EventType.FRUIT_EATEN);
+      ctx.audio_manager.update_sound(ctx.flags, dot_eaten: false, fruit_eaten: true);
       
       ctx.ui.score += (*fruit).points;
 

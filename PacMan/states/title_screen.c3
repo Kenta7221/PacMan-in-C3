@@ -9,6 +9,18 @@ import ghost;
 import ui;
 import timer;
 
+/*
+
+Index of this module:
+// Struct and methods definitions
+// Helper functions
+
+*/
+
+//------------------------------------------------------------------------------------
+// Struct and methods definitions
+//------------------------------------------------------------------------------------
+
 struct TitleScreen {  
   Font font;
   Texture2D maze_atlas; // Used only for dots and pellets
@@ -21,10 +33,10 @@ struct TitleScreen {
 }
 
 fn void? TitleScreen.init(&self) {
-  const String MAZE_ATLAS_DIR  = "assets/textures/maze-spritesheet.png";
-  const String GHOST_ATLAS_DIR = "assets/textures/ghosts.png";
-  const String FONT_DIR        = "assets/fonts/emulogic.ttf";
-  const String INTRO_DIR       = "assets/sfx/intro.wav";
+  const MAZE_ATLAS_DIR  = "assets/textures/maze-spritesheet.png";
+  const GHOST_ATLAS_DIR = "assets/textures/ghosts.png";
+  const FONT_DIR	= "assets/fonts/emulogic.ttf";
+  const INTRO_DIR	= "assets/sfx/start-music.wav";
 
   const Int16    GHOST_DRAW_POS_X = 5 * gl::TILE_SCALED + gl::TILE_SCALED / 2;
   const Int16[4] GHOST_DRAW_POS_Y = {
@@ -76,12 +88,7 @@ fn void? TitleScreen.init(&self) {
 <*
  @param [&out] state : "Game state passed as null!"
 *>
-fn void TitleScreen.update(&self, GameState *state, TimeSpan dt, float volume) {
-  static float prev_volume = 0.0f;
-
-  if(prev_volume != volume) rl::set_music_volume(self.music, volume);
-  prev_volume = volume;
-  
+fn void TitleScreen.update(&self, GameState *state, TimeSpan dt) {
   rl::update_music_stream(self.music);
   
   if(rl::is_key_down(rl::KEY_SPACE)) {
@@ -109,10 +116,10 @@ fn void TitleScreen.draw(&self) {
 
   self.ui.draw(pacman_texture: null, pacman_lives: 0, draw_lives_fruits: false);
  
-  draw_ghost_with_name(&self.ghosts[0], GhostType.BLINKY, &self.font, "-Shadow     Blinky");
-  draw_ghost_with_name(&self.ghosts[1], GhostType.PINKY , &self.font, "-Speedy     Pinky" );
-  draw_ghost_with_name(&self.ghosts[2], GhostType.INKY  , &self.font, "-Bashful    Inky"  );
-  draw_ghost_with_name(&self.ghosts[3], GhostType.CLYDE , &self.font, "-Pokey      Clyde" );
+  draw_ghost_with_name(&self.ghosts[0], GhostType.BLINKY, &self.font, "-Shadow    \"Blinky\"");
+  draw_ghost_with_name(&self.ghosts[1], GhostType.PINKY , &self.font, "-Speedy    \"Pinky\"" );
+  draw_ghost_with_name(&self.ghosts[2], GhostType.INKY  , &self.font, "-Bashful   \"Inky\""  );
+  draw_ghost_with_name(&self.ghosts[3], GhostType.CLYDE , &self.font, "-Pokey     \"Clyde\"" );
 
   draw_maze_points(&self.maze_atlas, &self.font);
  
@@ -145,6 +152,10 @@ fn void TitleScreen.draw(&self) {
 		   {255, 255, 255, 255}
   );
 }
+
+//------------------------------------------------------------------------------------
+// Helper functions
+//------------------------------------------------------------------------------------
 
 <*
  @ensure nicknames != null
@@ -240,10 +251,10 @@ fn void draw_maze_points(Texture2D *maze_atlas, Font *font) {
 }
 
 fn void TitleScreen.free(&self) {
+  rl::unload_font(self.font);
   rl::unload_texture(self.maze_atlas);
   rl::unload_texture(self.ghost_atlas);
-  rl::unload_font(self.font);
-  rl::unload_musci_stream(self.music);
+  rl::unload_music_stream(self.music);
 
   self.ui.free();
 }

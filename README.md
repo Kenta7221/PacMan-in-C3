@@ -29,18 +29,18 @@ c3c run
 const SCALE = 4;
 ```
 ## How to play
-- Press the **left arrow key** to **decrease** the volume and the **right arrow key** to **increase** it
 - Start the game by pressing **space bar**
 - Move using **WASD**
 - Collect all **244 dots** to advance to the next level
 - The game ends when **PacMan loses all his lives**
+- Press the **left arrow key** to **decrease** the volume and the **right arrow key** to **increase** it
 ## Missing features
 - Frighten ghost **blink** continuously instead of only when the timer is almost over
-- **Missing audio**
 ## License
 This project is licensed under the [MIT License](LICENSE.md)
 ## Acknowledgments
 + [The Pacman Dossier](https://pacman.holenet.info/#LvlSpecs)
-+ [Pacman Textures](https://www.spriters-resource.com/arcade/pacman/)
 + [Why do Pinky and Inky have different behaviors when Pac-Man is facing up?](http://donhodges.com/pacman_pinky_explanation.htm)
 + [How frightened ghosts decide where to go](https://www.youtube.com/watch?v=eFP0_rkjwlY&t=409s)
++ [Pacman Textures](https://www.spriters-resource.com/arcade/pacman/)
++ [Pacman sound effects](https://downloads.khinsider.com/game-soundtracks/album/pac-man-game-sound-effect-original-soundtrack-2024)

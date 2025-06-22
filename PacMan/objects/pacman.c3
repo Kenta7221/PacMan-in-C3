@@ -26,6 +26,7 @@ struct PacMan (AnimatorHandler) {
   // Bit 3-0 - curr dir
   Uint8 dirs;
 
+  // Bit layout:
   // Bit 1 - Dead
   // Bit 0 - Can turn 180
   Uint8 state_flags;
