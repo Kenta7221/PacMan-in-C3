@@ -23,10 +23,10 @@ cd PacMan
 c3c build
 c3c run
 ```
-3. If the window is too big or too small for you, navigate to the subdirectory and open a file called global.c3. There you will find a variable called SCALE, which you can change to your personal preference:
+3. If the window is too big or too small for you, navigate to the subdirectory and open a file called main.c3. There you will find a variable called screen scale, which you can change to your personal preference:
 ```bash
 # Your prefered scale value, e.g. 4
-const SCALE = 4;
+const SCREEN_SCALE = 4;
 ```
 ## How to play
 - Start the game by pressing **space bar**
