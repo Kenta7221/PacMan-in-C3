@@ -50,7 +50,6 @@ struct Ghost (AnimatorHandler) {
   Uint8 dir;
   TimeSpan lerp_amount;
 
-  // TODO
   // Bit layout:
   // Bit 6 - in tunnel
   // Bit 5 - elroy
@@ -343,7 +342,6 @@ fn void Ghost.move(&self, Tile *tiles, Int16[<2>] pacman_pos, uint level, Uint8 
     self.pos = gl::tween_pos_by_dir(self.pos, self.dir, self.lerp_amount);
   }
 
-  //  && self.dir != Direction.NONE idk why it was here
   if(!gl::is_aligned(self.pos)) return;
 
   if(gl::in_tunnel((Int8[<2>])(self.pos / gl::TILE_SCALED))) {
@@ -352,7 +350,7 @@ fn void Ghost.move(&self, Tile *tiles, Int16[<2>] pacman_pos, uint level, Uint8 
     return;
   }
 
-  // Disable being in a tunnel because we passed if in tunnel
+  // Disable being in a tunnel
   if(self.state_flags & GhostState.IN_TUNNEL) self.state_flags ^= GhostState.IN_TUNNEL;
   
   if(self.state_flags & GhostState.FRIGHTEN) {
@@ -407,7 +405,6 @@ fn void Ghost.update_animation(&self, TimeSpan dt) @dynamic {
     case Direction.DOWN	        : row = 1; break;
     default			: break;
   }
-
 }
 
 <*
@@ -496,7 +493,7 @@ fn bool activate_elroy(uint level, Uint8 eaten_dots) {
   Uint8 activation = 0;
 
   switch {
-    case level == 1 : activation = 200;  break;
+    case level == 1 : activation = 20;  break;
     case level == 2 : activation = 30;  break;
     case level <= 5 : activation = 40;  break;
     case level <= 8 : activation = 50;  break;

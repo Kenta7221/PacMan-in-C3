@@ -39,10 +39,8 @@ enum GameplayState : Uint8 (inline Uint8 state) {
 struct Gameplay {
   Texture2D ghost_atlas;
   AudioManager audio_manager;
-  Music[2] musics;  // Pacman, Ghost speed
-  Sound* sound; // Ghost, fruit eaten and death sfx 
   
-  Uint8 flags; // Game play states
+  Uint8 flags; // Gameplay states
   Uint8 eaten_dots;
   Uint8 eaten_ghosts;
   Uint8 global_ghosts_dot_counter;
@@ -67,11 +65,7 @@ fn void? Gameplay.init(&self) {
     io::eprintn("Ghost atlas has not been loaded!");
     return io::FILE_NOT_FOUND?;
   }
-
-  self.audio_manager.init()!;
     
-  self.sound = null;
-  
   self.flags |= GameplayState.START_LEVEL;
   self.eaten_dots = 0;
   self.eaten_ghosts = 0;
@@ -81,6 +75,7 @@ fn void? Gameplay.init(&self) {
 
   self.timer.init();
   self.ui.init()!;
+  self.audio_manager.init()!;
     
   self.pacman.init()!;
 
@@ -104,7 +99,7 @@ fn void Gameplay.reset_level(&self) {
   self.pause = 0.f;
 
   self.timer.reset();
-  self.audio_manager.update_ghost_music(0, GhostMusicType.NONE);
+  self.audio_manager.reset();
   
   if(self.score_popup != null) score_popup::handler(&self.score_popup, {0, 0}, 0, 0, PopupState.DESTROY, EventType.FRUIT_EATEN);
   if(self.fruit != null) {
@@ -168,7 +163,7 @@ fn void Gameplay.update_state(&self, GameState *state, bool *enter_game_loop, Ti
 	self.pacman.animation.update_swtich_time(0.18f);
       }
       
-      self.pacman.update(self.timer.level, &self.maze.tiles, dt);
+      self.pacman.update(self.timer.level, &self.maze.tiles, 0, false, false, dt);
       self.pause += dt;
       *enter_game_loop = false;
       return;
@@ -216,26 +211,30 @@ fn void Gameplay.update_state(&self, GameState *state, bool *enter_game_loop, Ti
 }
 
 fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
-  self.timer.update(new_time);
-  self.audio_manager.update();
+  static bool dot_eaten = false;
+
+  defer {
+    self.audio_manager.update_pacman_music(dot_eaten, dt);
+    self.audio_manager.update_ghost_music(&self.ghosts, chase_cycle: self.timer.which_cycle / 2 + 1);
+  }
   
   if(self.eaten_dots >= 244) {
     self.flags |= GameplayState.NEXT_LEVEL;
     return;
   }
 
+  // 1. Update using time
+  self.timer.update(new_time);
+
   if(self.score_popup != null) self.score_popup.elapsed_time += dt;
 
-  // TODO: Check if the actual timer in pacman doesn't progress if there is frighten mode
-  if(self.timer.new_cycle(dt) && !(self.flags & GameplayState.FRIGHTEN_MODE)) {
+  if(self.timer.new_cycle(dt)) {
     self.flags ^= GameplayState.CHASE_MODE;
       
     self.timer.cycle = 0.f;
     self.timer.which_cycle++;
 
-    if(self.timer.which_cycle % 2 == 0) {
-      self.audio_manager.update_ghost_music(0, GhostMusicType.values[self.timer.which_cycle + 1]);
-    }    
+    if(self.timer.which_cycle % 2 == 0) self.audio_manager.priority_queue |= QueueState.INCREMENT_SPEED_CYCLE;
   }
  
   if(self.timer.end_frighten_mode(dt, (bool)(self.flags & GameplayState.FRIGHTEN_MODE))) {
@@ -245,22 +244,28 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
     self.eaten_ghosts = 0;
     foreach(&ghost : self.ghosts) { ghost.state_flags &= (Uint8)~GhostState.FRIGHTEN.state; }
 
-    self.audio_manager.update_ghost_music(0, GhostMusicType.values[self.timer.which_cycle + 1]);
+    self.audio_manager.priority_queue |= QueueState.INCREMENT_SPEED_CYCLE;
+    self.audio_manager.priority_queue ^= QueueState.PLAYING_FRIGHTEN_MODE;
   }
-
+  
   // 2. PacMan interaction
-  self.pacman.update(self.timer.level, &self.maze.tiles, dt);
+  self.pacman.update(self.timer.level,
+		     &self.maze.tiles,
+		     self.ui.score,
+		     (bool)(self.flags & GameplayState.FRIGHTEN_MODE),
+		     dot_eaten,
+		     dt
+  );
 
-  bool dot_eaten = false;
   EventType e = self.maze.update(&self.pacman);
+  dot_eaten = false;
   if(e == ENERGIZE_EATEN) {
     dot_eaten = true;
     self.eaten_dots++;
     self.ui.score += 50;
     self.flags |= GameplayState.FRIGHTEN_MODE;
-    self.audio_manager.update_ghost_music(self.flags, GhostMusicType.values[self.timer.which_cycle + 1]);
+    self.audio_manager.priority_queue |= QueueState.ACTIVATE_FRIGHTEN_MODE;
     
-    // All ghosts turn 180 degrees upon the begging of the frighten mode
     foreach(&ghost : self.ghosts) {
       if(~ghost.state_flags & GhostState.IN_SPAWN && ~ghost.state_flags & GhostState.DEAD) {
 	ghost.state_flags |= GhostState.FRIGHTEN;
@@ -280,20 +285,7 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
     if(self.flags & GameplayState.USE_GLOBAL_COUNTER) { self.global_ghosts_dot_counter++; }
   }
 
-  self.audio_manager.update_pacman_music(dot_eaten, dt);
-
-  if(self.audio_manager.go_home_playing) {
-    bool stop_music = true;
-    foreach(&ghost : self.ghosts) {
-      if(ghost.state_flags & GhostState.DEAD || ghost.state_flags & GhostState.ENTERING_SPAWN) { stop_music = false; break; }
-    }
-
-    if(stop_music) {
-      self.audio_manager.update_ghost_music(self.flags, GhostMusicType.values[self.timer.which_cycle + 1]);
-      self.audio_manager.go_home_playing = false;
-    }
-  }
-
+  // 3. Ghosts interactions
   // Checking this out of loop because only blinky can become elroy
   if(ghost::activate_elroy(self.timer.level, self.eaten_dots) &&
   !(self.ghosts[GhostType.BLINKY].state_flags & GhostState.ELROY)) {
@@ -310,11 +302,14 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
     if(collision) {      
       if(ghost.state_flags & GhostState.DEAD) {
 	self.flags |= GameplayState.GHOST_EATEN;
+	
 	self.eaten_ghosts += 1;
+	Uint16 ghost_points =  100 * 1 << self.eaten_ghosts;
+	self.ui.score += ghost_points;
+	score_popup::handler(&self.score_popup, ghost.pos, ghost_points, 0, PopupState.INIT, EventType.GHOST_EATEN);
+	
 	self.audio_manager.update_sound(self.flags, fruit_eaten: false);
-	self.audio_manager.update_ghost_music(0, GhostMusicType.GO_HOME);
-	self.audio_manager.go_home_playing = true;
-	score_popup::handler(&self.score_popup, ghost.pos, self.eaten_ghosts, 0, PopupState.INIT, EventType.GHOST_EATEN);
+	self.audio_manager.priority_queue |= QueueState.ACTIVATE_GO_HOME;
 	continue;
       }
       

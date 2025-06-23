@@ -94,8 +94,8 @@ fn void GameContext.update(&self, GameState *state, bool *end_game) {
   GameState prev_state = *state;
 
   // Update master volume
-  if(rl::is_key_down(rl::KEY_LEFT)) { self.master_volume -= 0.01; }
-  else if(rl::is_key_down(rl::KEY_RIGHT)) { self.master_volume += 0.01; }
+  if(rl::is_key_down(rl::KEY_LEFT)) { self.master_volume -= 0.0001; }
+  else if(rl::is_key_down(rl::KEY_RIGHT)) { self.master_volume += 0.0001; }
     
   if(self.master_volume <= 0.f) self.master_volume = 0.f;
   if(self.master_volume >= 1.f) self.master_volume = 1.f;

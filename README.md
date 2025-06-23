@@ -6,7 +6,6 @@ This project is a **partial recreation of the classic PacMan arcade game**, writ
   <img src="screenshots/start-level.png" width="50%" height="50%" alt="Start Level">
   <img src="screenshots/gameplay.png" width="50%" height="50%" alt="Gameplay">
 </p>
-
 ---
 ## Requirements
 - Linux or Windows OS
@@ -18,12 +17,11 @@ All the necessary steps in order to download the C3 compiler can be found on the
 ```bash
 cd PacMan
 ```
-2. Run the following commands to build the program:
+2. Run the following commands to build and run the program:
 ```bash
-c3c build
 c3c run
 ```
-3. If the window is too big or too small for you, navigate to the subdirectory and open a file called main.c3. There you will find a variable called screen scale, which you can change to your personal preference:
+3. If the window is too big or too small for you, navigate to the subdirectory and open a file called main.c3. There you will find a variable called SCREEN_SCALE, which you can change to your personal preference:
 ```bash
 # Your prefered scale value, e.g. 4
 const SCREEN_SCALE = 4;
@@ -32,12 +30,13 @@ const SCREEN_SCALE = 4;
 - Start the game by pressing **space bar**
 - Move using **WASD**
 - Collect all **244 dots** to advance to the next level
+- You gain **additional life** after scoring **10000 points or more**
 - The game ends when **PacMan loses all his lives**
 - Press the **left arrow key** to **decrease** the volume and the **right arrow key** to **increase** it
 ## Missing features
 - Frighten ghost **blink** continuously instead of only when the timer is almost over
-- **Pac-Ma**n becomes **unresponsive (can’t turn or react)** after a **ghost dies**
-- **Ghost music** lacking proper **update functionality**
+- Pac-Man **can't turn** after **eating a ghost**
+- So minor bugs
 ## License
 This project is licensed under the [MIT License](LICENSE.md)
 ## Acknowledgments

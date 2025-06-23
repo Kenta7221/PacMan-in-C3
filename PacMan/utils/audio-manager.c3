@@ -5,8 +5,8 @@ import std::io;
 import rl;
 import gl;
 
+import ghost;
 import game_ctx::gameplay;
-
 
 /*
 
@@ -19,21 +19,18 @@ Index of this module:
 // Struct, enums and methods definitions
 //------------------------------------------------------------------------------------
 
-enum GhostMusicType : Uint8 (inline Uint8 state) {
-  NONE          = 1 << 0,
-  NORMAL_SPEED	= 1 << 1, 
-  SPUR_MODE_1	= 1 << 2, 
-  SPUR_MODE_2	= 1 << 3, 
-  SPUR_MODE_3	= 1 << 4, 
-  SPUR_MODE_4	= 1 << 5, 
-  FRIGHTEN_MODE = 1 << 6,
-  GO_HOME       = 1 << 7
+enum QueueState : Uint8 (inline Uint8 state) {
+  ACTIVATE_SPEED_CYCLE	 = 1 << 0, 
+  ACTIVATE_FRIGHTEN_MODE = 1 << 1,
+  ACTIVATE_GO_HOME       = 1 << 2,
+  PLAYING_SPEED_CYCLE	 = 1 << 3, 
+  PLAYING_FRIGHTEN_MODE  = 1 << 4,
+  PLAYING_GO_HOME        = 1 << 5,
+  INCREMENT_SPEED_CYCLE  = 1 << 6
 }
 
 struct AudioManager {
-  bool go_home_playing; // To deal with return home sfx make easier
-  bool music_in_queue;  // Only is for ghost music ofx
-  GhostMusicType next_music;
+  Uint8 priority_queue; // To deal with switching music
 
   Music[2] musics; // One for ghost and pacman
   Sound* sound;
@@ -43,8 +40,8 @@ fn void? AudioManager.init(&self) {
   const GHOST_NORMAL_SPEED_SFX = "assets/sfx/ghost-normal-speed.wav";
   const PACMAN_EATING_SFX      = "assets/sfx/pacman-eating-dot.wav";
 
-  self.go_home_playing = false;
-  self.music_in_queue = false;
+  self.priority_queue = 0;
+  self.priority_queue |= QueueState.PLAYING_SPEED_CYCLE;  
   self.sound = null;
 
   self.musics[0] = rl::load_music_stream(GHOST_NORMAL_SPEED_SFX);
@@ -63,44 +60,114 @@ fn void? AudioManager.init(&self) {
   rl::play_music_stream(self.musics[1]);
 }
 
-fn void AudioManager.update(&self) {
-  rl::update_music_stream(self.musics[0]);
-  rl::update_music_stream(self.musics[1]);
+fn void AudioManager.reset(&self) {
+  const GHOST_NORMAL_SPEED_SFX = "assets/sfx/ghost-normal-speed.wav";
+  const PACMAN_EATING_SFX      = "assets/sfx/pacman-eating-dot.wav";
+
+  self.priority_queue = 0;
+  self.priority_queue |= QueueState.PLAYING_SPEED_CYCLE;;
+    
+  self.sound = null;
+
+  self.musics[0] = rl::load_music_stream(GHOST_NORMAL_SPEED_SFX);
+  if(!rl::is_music_valid(self.musics[0])) {
+    io::eprintn("Ghost normal speed music has not been loaded!");
+    return;
+  }
+
+  self.musics[1] = rl::load_music_stream(PACMAN_EATING_SFX);
+  if(!rl::is_music_valid(self.musics[1])) {
+    io::eprintn("PacMan eating dot music has not been loaded!");
+    return;
+  }
+    
+  rl::play_music_stream(self.musics[0]);  
+  rl::play_music_stream(self.musics[1]);
 }
 
-fn void AudioManager.update_ghost_music(&self, Uint8 flags, GhostMusicType type) {
-  const GHOST_NORMAL_SPEED_SFX = "assets/sfx/ghost-normal-speed.wav";
-  const GHOST_SPURT_1_SFX      = "assets/sfx/ghost-spurt-move-1.wav";
-  const GHOST_SPURT_2_SFX      = "assets/sfx/ghost-spurt-move-2.wav";
-  const GHOST_SPURT_3_SFX      = "assets/sfx/ghost-spurt-move-3.wav";
-  const GHOST_SPURT_4_SFX      = "assets/sfx/ghost-spurt-move-4.wav";
+fn void AudioManager.disable_previous_ghost_music(&self) @private @inline {
+  const ALL_MUSIC_PLAYING_MASK = 0x38;
+
+  self.priority_queue |= ALL_MUSIC_PLAYING_MASK;
+  self.priority_queue ^= ALL_MUSIC_PLAYING_MASK;
+}
+
+<*
+ @param [&in] ghosts : "Ghosts were passed as null!"
+*>
+fn void AudioManager.update_ghost_music(&self, Ghost *ghosts, uint chase_cycle) {
+  const ZString[5] GHOST_SPEED_SFXS = {
+    "assets/sfx/ghost-normal-speed.wav",
+    "assets/sfx/ghost-spurt-move-1.wav",
+    "assets/sfx/ghost-spurt-move-2.wav",
+    "assets/sfx/ghost-spurt-move-3.wav",
+    "assets/sfx/ghost-spurt-move-4.wav"
+  };
   const GHOST_FRIGHTEN_SFX     = "assets/sfx/ghost-frighten.wav";
   const GHOST_RETURN_HOME_SFX  = "assets/sfx/ghost-go-home.wav";
+  
+  if(self.priority_queue & QueueState.PLAYING_GO_HOME) {
+    bool stop_music = true;
+    if(self.priority_queue & QueueState.INCREMENT_SPEED_CYCLE) {
+      self.priority_queue ^= QueueState.INCREMENT_SPEED_CYCLE;
+      self.priority_queue |= QueueState.PLAYING_SPEED_CYCLE;
+    }
+    
+    for(Uint8 i = 0; i < 3; i++) {
+      if(ghosts[i].state_flags & GhostState.DEAD || ghosts[i].state_flags & GhostState.ENTERING_SPAWN) {
+	stop_music = false;
+	break;
+      }
+    } 
+   
+    if(!stop_music) {
+      rl::update_music_stream(self.musics[0]);
+      return;
+    }
+    
+    // After the ghost enters the spawn and the next update begins, now all the
+    // playing musics change to activate which will make it to play the previous song
+    // or play the new state depending on priority
+    self.priority_queue ^= QueueState.PLAYING_GO_HOME;
+    self.priority_queue >>= 3;
+  }
 
   ZString path = "";
   
-  defer rl::play_music_stream(self.musics[0]);
-  
+  switch {
+    case (bool)(self.priority_queue & QueueState.ACTIVATE_GO_HOME):
+      path = GHOST_RETURN_HOME_SFX;
+      self.priority_queue ^= QueueState.ACTIVATE_GO_HOME;
+      self.priority_queue |= QueueState.PLAYING_GO_HOME;
+      break;
+    case (bool)(self.priority_queue & QueueState.ACTIVATE_FRIGHTEN_MODE):
+      path = GHOST_FRIGHTEN_SFX;
+      self.disable_previous_ghost_music();
+      self.priority_queue ^= QueueState.ACTIVATE_FRIGHTEN_MODE;
+      self.priority_queue |= QueueState.PLAYING_FRIGHTEN_MODE;
+      break;
+    case (bool)(self.priority_queue & QueueState.INCREMENT_SPEED_CYCLE):
+      self.priority_queue ^= QueueState.INCREMENT_SPEED_CYCLE;
+      self.priority_queue |= QueueState.ACTIVATE_SPEED_CYCLE;
+      nextcase;
+    case (bool)(self.priority_queue & QueueState.ACTIVATE_SPEED_CYCLE):
+      path = GHOST_SPEED_SFXS[chase_cycle];
+      self.disable_previous_ghost_music();
+      self.priority_queue ^= QueueState.ACTIVATE_SPEED_CYCLE;
+      self.priority_queue |= QueueState.PLAYING_SPEED_CYCLE;
+      break;
+    default:
+      rl::update_music_stream(self.musics[0]);
+      return;
+  }
+
   if(rl::is_music_stream_playing(self.musics[0])) {
     rl::stop_music_stream(self.musics[0]);
     rl::unload_music_stream(self.musics[0]);
   }
   
-  if(flags & GameplayState.FRIGHTEN_MODE) {
-    self.musics[0] = rl::load_music_stream(GHOST_FRIGHTEN_SFX);
-    return;
-  }
-
-  switch(type) {
-    case SPUR_MODE_1: path = GHOST_SPURT_1_SFX;      break;
-    case SPUR_MODE_2: path = GHOST_SPURT_2_SFX;      break;
-    case SPUR_MODE_3: path = GHOST_SPURT_3_SFX;      break;
-    case SPUR_MODE_4: path = GHOST_SPURT_4_SFX;      break;
-    case GO_HOME: path = GHOST_RETURN_HOME_SFX;  break;
-    default:          path = GHOST_NORMAL_SPEED_SFX; break;
-  }
-
   self.musics[0] = rl::load_music_stream(path);
+  rl::play_music_stream(self.musics[0]);
 }
 
 fn void AudioManager.update_pacman_music(&self, bool dot_eaten, TimeSpan dt) {
@@ -109,7 +176,6 @@ fn void AudioManager.update_pacman_music(&self, bool dot_eaten, TimeSpan dt) {
   if(dot_eaten) {
     duration = rl::get_music_time_lenght(self.musics[1]) / 2;
     rl::resume_music_stream(self.musics[1]);
-    return;
   }
 
   duration -= dt;
@@ -117,13 +183,15 @@ fn void AudioManager.update_pacman_music(&self, bool dot_eaten, TimeSpan dt) {
     duration = 0.f;
     rl::pause_music_stream(self.musics[1]);
 
-    // set the music to beginning
+    // Set the music to beginning
     float time_left = 1 - rl::get_music_time_played(self.musics[1]);
     rl::seek_music_stream(self.musics[1], 0.f);
+    return;
   }
+
+  rl::update_music_stream(self.musics[1]);
 }
 
-// bool dot_eaten, 
 fn void AudioManager.update_sound(&self, Uint8 flags, bool fruit_eaten) {
   const PACMAN_EATEN_SFX = "assets/sfx/fail.wav";
   const GHOST_EATEN_SFX  = "assets/sfx/pacman-eating-ghost.wav";

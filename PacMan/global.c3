@@ -1,9 +1,7 @@
 module gl;
 
 import rl;
-
 import main;
-
 
 /*
 
@@ -164,7 +162,7 @@ fn bool is_reverse_dir(Uint8 curr_dir, Uint8 potential_dir) {
 
 fn bool in_tunnel(Int8[<2>] pos)  {  
   const Int8[<3>]LEFT_TUNNEL = {
-    -2,  // x pos
+    -3,  // x pos
      4,  // width
     17   // y pos
   };

@@ -25,8 +25,9 @@ const CURR_DIR_MASK @private = 0x0F;
 const TURN_DIR_MASK @private = 0xF0;
 
 enum PacManState : Uint8 (inline Uint8 state) {
+  TURN_180             = 1 << 0,
   DEAD                 = 1 << 1,
-  TURN_180             = 1 << 0
+  NEW_LIFE             = 1 << 2
 }
 
 struct PacMan (AnimatorHandler) {
@@ -73,9 +74,14 @@ fn void PacMan.set_at_start_pos(&self) {
   };
 
   self.pos = BASE_POS;
-  self.state_flags = 0;
-  
-  self.dirs = (Direction.NONE.type << 4) | (Direction.NONE.type);
+
+  if(self.state_flags & PacManState.NEW_LIFE) {
+    self.state_flags = PacManState.NEW_LIFE;
+  } else {
+    self.state_flags = 0;
+  }  
+
+  self.dirs = (Direction.NONE.type << 4) | (Direction.LEFT.type);
 
   self.update_animation(dt: 0);
 }
@@ -131,7 +137,7 @@ fn void PacMan.move(&self, Tile *tiles, TimeSpan dt, float speed) {
   next_pos = gl::get_tile_offset(self.pos, self.dirs);
   next_tile = maze::get_tile_at(tiles, next_pos);
   if(next_tile.type == WALL) {
-    self.state_flags = PacManState.TURN_180;
+    self.state_flags |= PacManState.TURN_180;
     return;
   }
 
@@ -166,9 +172,14 @@ fn void PacMan.update_animation(&self, TimeSpan dt) @dynamic {
 <*
  @param [&in] tiles : "Tiles was passed as null"
 *>
-fn void PacMan.update(&self, uint level, Tile *tiles, TimeSpan dt) {
+fn void PacMan.update(&self, uint level, Tile *tiles, uint score, bool frighten_mode, bool dot_eaten, TimeSpan dt) {
+  if(score >= 10000 && !(self.state_flags & PacManState.NEW_LIFE)) {
+    self.state_flags |= PacManState.NEW_LIFE;
+    self.lives++;
+  }
+  
   if(!(self.state_flags & PacManState.DEAD)) {
-    self.move(tiles, dt, get_speed(level));
+    self.move(tiles, dt, get_speed(level, frighten_mode, dot_eaten));
   }
   
   self.update_animation(dt);
@@ -196,9 +207,30 @@ fn void PacMan.draw(&self) {
 // Helper functions
 //------------------------------------------------------------------------------------
 
-fn float get_speed(uint level) @private {
-  if(level == 1) return 9.6f; // 80%
+fn float get_speed(uint level, bool frighten_mode, bool dot_eaten) @private {
+  if(dot_eaten) {
+    if(frighten_mode) {
+      if(level == 1) return 9.5f; // ~79%
+      if(level < 5)  return 9.9f; // ~83%
 
+      return 10.4f; // ~87%
+    }
+
+    if(level == 1) return 8.5f;  // ~71%
+    if(level < 5)  return 9.5f;  // ~79%
+    if(level < 21) return 10.4f; // ~78%
+    
+    return 9.5f; // ~79%
+  }
+
+  if(frighten_mode) {
+    if(level == 1) return 10.8f; // 90%
+    if(level < 5)  return 11.4f; // 95%
+
+    return 12.f; // 100%
+  }
+  
+  if(level == 1) return 9.6f; // 80%
   if(level < 5) return 10.8f; // 90%
 
   return 12.f; // 100%
