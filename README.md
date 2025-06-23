@@ -36,8 +36,8 @@ const SCREEN_SCALE = 4;
 - Press the **left arrow key** to **decrease** the volume and the **right arrow key** to **increase** it
 ## Missing features
 - Frighten ghost **blink** continuously instead of only when the timer is almost over
-- Pac-Man **can't turn** after **eating a ghost**
-- So minor bugs
+- Pac-Man **can't turn** after eating a ghost
+- Some minor bugs
 ## License
 This project is licensed under the [MIT License](LICENSE.md)
 ## Acknowledgments
