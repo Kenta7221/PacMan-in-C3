@@ -50,7 +50,7 @@ fn void? GameUI.init(&self) {
     return io::FILE_NOT_FOUND?;
   }
 
-  load_high_score(&self.high_score);
+  load_high_score(&self.high_score)!;
   self.score = 0;
 
   self.fruit_display_index = 0;
@@ -240,17 +240,27 @@ fn void GameUI.free(&self) {
 <*
  @param [&out] high_score : "High Score passed as null!"
 *>
-fn void load_high_score(uint *high_score) @inline @private {
-  String temp = file_loader::HIGHEST_SCORE;
-  *high_score = temp.to_uint()!!;
+fn void? load_high_score(uint *high_score) @private {
+  File file = file::open("assets/high_score.bin", "rb")!;
+  char[] buffer = mem::new_array(char, 12);
+  
+  defer {
+    (void)file.close();
+    free(buffer);
+  }
+  
+  file.read(buffer)!!;
+  *high_score = (Uint16)libc::atoi(buffer);
 }
 
 fn void save_high_score(uint high_score) {
   File file;
   ZString str = (ZString)mem::new_array(char, 12);
 
-  defer (void)file.close();
-
+  defer {
+    (void)file.close();
+    free(str);
+  }
   
   libc::sprintf(str, "%d", high_score);
 
@@ -259,6 +269,4 @@ fn void save_high_score(uint high_score) {
   
   file = file::open("assets/high_score.bin", "wb")!!;
   file.write(str.str_view())!!;
-  
-  free(str);
 }
