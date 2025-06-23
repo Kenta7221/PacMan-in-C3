@@ -6,6 +6,7 @@ This project is a **partial recreation of the classic PacMan arcade game**, writ
   <img src="screenshots/start-level.png" width="50%" height="50%" alt="Start Level">
   <img src="screenshots/gameplay.png" width="50%" height="50%" alt="Gameplay">
 </p>
+
 ---
 ## Requirements
 - Linux or Windows OS
