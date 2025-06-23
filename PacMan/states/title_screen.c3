@@ -30,6 +30,8 @@ struct TitleScreen {
 
   GameUI ui;
   Ghost[4] ghosts;
+  
+  TimeSpan elapsed_time;
 }
 
 fn void? TitleScreen.init(&self) {
@@ -83,12 +85,16 @@ fn void? TitleScreen.init(&self) {
     ghost.dir = Direction.RIGHT;
     ghost.pos = {GHOST_DRAW_POS_X, GHOST_DRAW_POS_Y[idx] };
   }
+
+  self.elapsed_time = 0.f;
 }
 
 <*
  @param [&out] state : "Game state passed as null!"
 *>
 fn void TitleScreen.update(&self, GameState *state, TimeSpan dt) {
+  self.elapsed_time += dt;
+  
   rl::update_music_stream(self.music);
   
   if(rl::is_key_down(rl::KEY_SPACE)) {
@@ -98,10 +104,7 @@ fn void TitleScreen.update(&self, GameState *state, TimeSpan dt) {
   foreach(&ghost : self.ghosts) { ghost.update_animation(dt); }
 }
 fn void TitleScreen.draw(&self) {
-  static Uint16 blinks = 0;
   static bool flash = true;
-
-  blinks += 1;
  
   rl::draw_text_ex(self.font,
 		   "Character / Nickname",
@@ -134,8 +137,8 @@ fn void TitleScreen.draw(&self) {
 		   {255, 185, 255, 255}
   );
   
-  if(blinks >= 750) {
-    blinks = 0;
+  if(self.elapsed_time >= 0.23f) {
+    self.elapsed_time = 0;
     flash = !flash;
   }
 

@@ -40,6 +40,7 @@ struct Maze {
   Tile[gl::MAZE_WIDTH * gl::MAZE_HEIGHT] tiles;
   ZString file_data;
   Texture2D texture;
+  TimeSpan elapsed_time;
 }
 
 // TODO: Think about optional return if it's a good idea
@@ -84,15 +85,13 @@ fn EventType Maze.update(&self, PacMan *pacman) {
 }
 
 fn void Maze.draw(&self, bool finished_level = false, bool blinking_energizer = false) {
-  static Uint16 blinks = 0;
   static bool is_white = false;
   static bool blank_energizer = false;
 
-  if(finished_level || blinking_energizer) blinks++;
   if(!finished_level && is_white) is_white = false;
   
   for(int i = 0; i < gl::MAZE_WIDTH * gl::MAZE_HEIGHT; i++) {
-    if(finished_level && blinks >= 350) change_tile_around(&self.tiles[i], is_white);
+    if(finished_level && self.elapsed_time >= 0.15f) change_tile_around(&self.tiles[i], is_white);
 
     if(blinking_energizer && blank_energizer && self.tiles[i].type == TileType.ENERGIZER) continue;
     
@@ -113,11 +112,11 @@ fn void Maze.draw(&self, bool finished_level = false, bool blinking_energizer = 
     rl::draw_texture_pro(self.texture, src, dest, {0, 0}, 0, {255, 255, 255, 255});
   }
 
-  if(blinks >= 350) {
+  if(self.elapsed_time >= 0.15f) {
     if(finished_level) is_white = !is_white;    
     if(blinking_energizer) blank_energizer = !blank_energizer;
     
-    blinks = 0;
+    self.elapsed_time = 0.0f;
   }
 }
 

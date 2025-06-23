@@ -248,11 +248,17 @@ fn void load_high_score(uint *high_score) @inline @private {
 fn void save_high_score(uint high_score) {
   File file;
   ZString str = (ZString)mem::new_array(char, 12);
+
+  defer (void)file.close();
+
+  
   libc::sprintf(str, "%d", high_score);
+
+  io::print("Saving high score: ");
+  io::printn(high_score);
   
   file = file::open("assets/high_score.bin", "wb")!!;
   file.write(str.str_view())!!;
   
   free(str);
-  file.close()!!;
 }

@@ -125,7 +125,7 @@ fn void Gameplay.reset_level(&self) {
  @param [&out]   enter_game_loop : "Enter game loop was passed as null!"
 *>
 fn void Gameplay.update_state(&self, GameState *state, bool *enter_game_loop, TimeSpan dt) {
-  if(self.flags & GameplayState.START_LEVEL) {
+  if(self.flags & GameplayState.START_LEVEL) {    
     if(self.pause < 2.f) {
       self.pause += dt;
       *enter_game_loop = false;
@@ -179,7 +179,7 @@ fn void Gameplay.update_state(&self, GameState *state, bool *enter_game_loop, Ti
     self.pacman.animation.update_swtich_time(0.08f);
 
     if(self.pacman.lives == 0) {
-      ui::save_high_score(self.ui.high_score);      
+      ui::save_high_score(self.ui.score);
       *state = DEATH_SCREEN;
       *enter_game_loop = false;
       return;
@@ -192,6 +192,7 @@ fn void Gameplay.update_state(&self, GameState *state, bool *enter_game_loop, Ti
 
   if(self.flags & GameplayState.NEXT_LEVEL) {
     if(self.pause < 3.f) {
+      self.maze.elapsed_time += dt;
       self.pause += dt;
       *enter_game_loop = false;
       return;
@@ -247,6 +248,8 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
     self.audio_manager.priority_queue |= QueueState.INCREMENT_SPEED_CYCLE;
     self.audio_manager.priority_queue ^= QueueState.PLAYING_FRIGHTEN_MODE;
   }
+
+  self.maze.elapsed_time += dt;
   
   // 2. PacMan interaction
   self.pacman.update(self.timer.level,
