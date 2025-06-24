@@ -228,7 +228,6 @@ fn void GameUI.draw(&self, Texture2D *pacman_texture, Uint8 pacman_lives, bool d
 }
 
 fn void GameUI.free(&self) {
-  ui::save_high_score(self.high_score);
   rl::unload_font(self.font);
   rl::unload_texture(self.texture);
 }
@@ -263,9 +262,6 @@ fn void save_high_score(uint high_score) {
   }
   
   libc::sprintf(str, "%d", high_score);
-
-  io::print("Saving high score: ");
-  io::printn(high_score);
   
   file = file::open("assets/high_score.bin", "wb")!!;
   file.write(str.str_view())!!;

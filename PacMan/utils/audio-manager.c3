@@ -206,10 +206,10 @@ fn void AudioManager.update_sound(&self, Uint8 flags, bool fruit_eaten) {
     case fruit_eaten:
       path = FRUIT_EATEN_SFX;
       break;
-    case (bool)(flags & GameplayState.RESET_LEVEL):
+    case (bool)(flags & GameplayFlags.RESET_LEVEL):
       path = PACMAN_EATEN_SFX;
       break;
-    case (bool)(flags & GameplayState.GHOST_EATEN):
+    case (bool)(flags & GameplayFlags.GHOST_EATEN):
       path = GHOST_EATEN_SFX;
       break;
   }

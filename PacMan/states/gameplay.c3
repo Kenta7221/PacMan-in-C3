@@ -26,7 +26,7 @@ Index of this module:
 // Struct, enum and methods definitions
 //------------------------------------------------------------------------------------
 
-enum GameplayState : Uint8 (inline Uint8 state) {
+enum GameplayFlags : Uint8 (inline Uint8 state) {
   START_LEVEL         = 1 << 0,
   RESET_LEVEL         = 1 << 1,
   NEXT_LEVEL          = 1 << 2,
@@ -66,7 +66,7 @@ fn void? Gameplay.init(&self) {
     return io::FILE_NOT_FOUND?;
   }
     
-  self.flags |= GameplayState.START_LEVEL;
+  self.flags |= GameplayFlags.START_LEVEL;
   self.eaten_dots = 0;
   self.eaten_ghosts = 0;
   self.global_ghosts_dot_counter = 0;
@@ -125,20 +125,20 @@ fn void Gameplay.reset_level(&self) {
  @param [&out]   enter_game_loop : "Enter game loop was passed as null!"
 *>
 fn void Gameplay.update_state(&self, GameState *state, bool *enter_game_loop, TimeSpan dt) {
-  if(self.flags & GameplayState.START_LEVEL) {    
+  if(self.flags & GameplayFlags.START_LEVEL) {    
     if(self.pause < 2.f) {
       self.pause += dt;
       *enter_game_loop = false;
       return;
     }
 
-    self.flags ^= GameplayState.START_LEVEL;
+    self.flags ^= GameplayFlags.START_LEVEL;
     self.pause = 0.0f;
     *enter_game_loop = false;
     return;
   }
 
-  if(self.flags & GameplayState.GHOST_EATEN) {
+  if(self.flags & GameplayFlags.GHOST_EATEN) {
     if(self.pause < 1.f) {
       self.pause += dt;
       *enter_game_loop = false;
@@ -146,12 +146,12 @@ fn void Gameplay.update_state(&self, GameState *state, bool *enter_game_loop, Ti
     }
 
     self.pause = 0.0f;
-    self.flags ^= GameplayState.GHOST_EATEN;
+    self.flags ^= GameplayFlags.GHOST_EATEN;
     *enter_game_loop = false;
     return;
   }
 
-  if(self.flags & GameplayState.RESET_LEVEL) {
+  if(self.flags & GameplayFlags.RESET_LEVEL) {
     if(self.pause < 1.f) {
       self.pause += dt;
       *enter_game_loop = false;
@@ -171,8 +171,8 @@ fn void Gameplay.update_state(&self, GameState *state, bool *enter_game_loop, Ti
 
     self.pause = 0.0f;
 
-    self.flags ^= GameplayState.RESET_LEVEL;
-    self.flags |= GameplayState.USE_GLOBAL_COUNTER;
+    self.flags ^= GameplayFlags.RESET_LEVEL;
+    self.flags |= GameplayFlags.USE_GLOBAL_COUNTER;
 
     self.pacman.lives--;
     self.pacman.state_flags ^= PacManState.DEAD;
@@ -190,7 +190,7 @@ fn void Gameplay.update_state(&self, GameState *state, bool *enter_game_loop, Ti
     return;
   }
 
-  if(self.flags & GameplayState.NEXT_LEVEL) {
+  if(self.flags & GameplayFlags.NEXT_LEVEL) {
     if(self.pause < 3.f) {
       self.maze.elapsed_time += dt;
       self.pause += dt;
@@ -202,7 +202,7 @@ fn void Gameplay.update_state(&self, GameState *state, bool *enter_game_loop, Ti
     
     self.timer.level++;
     self.ui.add_fruit(self.timer.level);
-    self.flags ^= GameplayState.NEXT_LEVEL;
+    self.flags ^= GameplayFlags.NEXT_LEVEL;
     self.reset_level();
     *enter_game_loop = false;
     return;
@@ -220,7 +220,7 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
   }
   
   if(self.eaten_dots >= 244) {
-    self.flags |= GameplayState.NEXT_LEVEL;
+    self.flags |= GameplayFlags.NEXT_LEVEL;
     return;
   }
 
@@ -230,7 +230,7 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
   if(self.score_popup != null) self.score_popup.elapsed_time += dt;
 
   if(self.timer.new_cycle(dt)) {
-    self.flags ^= GameplayState.CHASE_MODE;
+    self.flags ^= GameplayFlags.CHASE_MODE;
       
     self.timer.cycle = 0.f;
     self.timer.which_cycle++;
@@ -238,8 +238,8 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
     if(self.timer.which_cycle % 2 == 0) self.audio_manager.priority_queue |= QueueState.INCREMENT_SPEED_CYCLE;
   }
  
-  if(self.timer.end_frighten_mode(dt, (bool)(self.flags & GameplayState.FRIGHTEN_MODE))) {
-    self.flags ^= GameplayState.FRIGHTEN_MODE;
+  if(self.timer.end_frighten_mode(dt, (bool)(self.flags & GameplayFlags.FRIGHTEN_MODE))) {
+    self.flags ^= GameplayFlags.FRIGHTEN_MODE;
     self.timer.frighten_mode = 0.f;
     
     self.eaten_ghosts = 0;
@@ -255,7 +255,7 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
   self.pacman.update(self.timer.level,
 		     &self.maze.tiles,
 		     self.ui.score,
-		     (bool)(self.flags & GameplayState.FRIGHTEN_MODE),
+		     (bool)(self.flags & GameplayFlags.FRIGHTEN_MODE),
 		     dot_eaten,
 		     dt
   );
@@ -266,7 +266,7 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
     dot_eaten = true;
     self.eaten_dots++;
     self.ui.score += 50;
-    self.flags |= GameplayState.FRIGHTEN_MODE;
+    self.flags |= GameplayFlags.FRIGHTEN_MODE;
     self.audio_manager.priority_queue |= QueueState.ACTIVATE_FRIGHTEN_MODE;
     
     foreach(&ghost : self.ghosts) {
@@ -285,7 +285,7 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
     self.ui.score += 10;
     self.audio_manager.update_sound(self.flags, fruit_eaten: false);
     
-    if(self.flags & GameplayState.USE_GLOBAL_COUNTER) { self.global_ghosts_dot_counter++; }
+    if(self.flags & GameplayFlags.USE_GLOBAL_COUNTER) { self.global_ghosts_dot_counter++; }
   }
 
   // 3. Ghosts interactions
@@ -304,12 +304,17 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
 
     if(collision) {      
       if(ghost.state_flags & GhostState.DEAD) {
-	self.flags |= GameplayState.GHOST_EATEN;
+	self.flags |= GameplayFlags.GHOST_EATEN;
+
+	io::printn(self.eaten_ghosts);
 	
 	self.eaten_ghosts += 1;
 	Uint16 ghost_points =  100 * 1 << self.eaten_ghosts;
 	self.ui.score += ghost_points;
 	score_popup::handler(&self.score_popup, ghost.pos, ghost_points, 0, PopupState.INIT, EventType.GHOST_EATEN);
+
+	io::printn("Can turn 180");
+	self.pacman.state_flags |= PacManState.ATE_GHOST;
 	
 	self.audio_manager.update_sound(self.flags, fruit_eaten: false);
 	self.audio_manager.priority_queue |= QueueState.ACTIVATE_GO_HOME;
@@ -317,7 +322,7 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
       }
       
       self.pacman.state_flags |= PacManState.DEAD;
-      self.flags |= GameplayState.RESET_LEVEL;
+      self.flags |= GameplayFlags.RESET_LEVEL;
       self.audio_manager.update_sound(self.flags, fruit_eaten: false);
       return;
     }    
@@ -325,7 +330,7 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
 }
 
 fn void Gameplay.draw(&self) {
-  if(self.flags & GameplayState.START_LEVEL) {
+  if(self.flags & GameplayFlags.START_LEVEL) {
     self.maze.draw();    
     draw_ready_player_text(&self.ui.font, self.pause);
       
@@ -337,7 +342,7 @@ fn void Gameplay.draw(&self) {
     return;
   }
 
-  if(self.flags & GameplayState.GHOST_EATEN) {
+  if(self.flags & GameplayFlags.GHOST_EATEN) {
     self.maze.draw();
       
     if(self.fruit != null) self.fruit.draw();
@@ -353,7 +358,7 @@ fn void Gameplay.draw(&self) {
     return;
   }
 
-  if(self.flags & GameplayState.RESET_LEVEL) { // aka PacMan died
+  if(self.flags & GameplayFlags.RESET_LEVEL) { // aka PacMan died
     self.maze.draw();
       
     if(self.fruit != null) self.fruit.draw();
@@ -367,7 +372,7 @@ fn void Gameplay.draw(&self) {
     return;
   }
 
-  if(self.flags & GameplayState.NEXT_LEVEL) {
+  if(self.flags & GameplayFlags.NEXT_LEVEL) {
     self.ui.draw(&self.pacman.texture, self.pacman.lives);
     
     if(self.pause < 1.f) {

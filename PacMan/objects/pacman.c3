@@ -8,7 +8,6 @@ import rl;
 import animator;
 import maze;
 
-
 /*
 
 Index of this module:
@@ -25,9 +24,10 @@ const CURR_DIR_MASK @private = 0x0F;
 const TURN_DIR_MASK @private = 0xF0;
 
 enum PacManState : Uint8 (inline Uint8 state) {
-  TURN_180             = 1 << 0,
-  DEAD                 = 1 << 1,
-  NEW_LIFE             = 1 << 2
+  TURN_180  = 1 << 0,
+  DEAD      = 1 << 1,
+  ATE_GHOST = 1 << 2,
+  NEW_LIFE  = 1 << 3,
 }
 
 struct PacMan (AnimatorHandler) {
@@ -41,6 +41,7 @@ struct PacMan (AnimatorHandler) {
   Uint8 dirs;
 
   // Bit layout:
+  // Bit 2 - Ate a ghost
   // Bit 1 - Dead
   // Bit 0 - Can turn 180
   Uint8 state_flags;
@@ -117,19 +118,37 @@ fn void PacMan.move(&self, Tile *tiles, TimeSpan dt, float speed) {
   else if(rl::is_key_down(rl::KEY_A)) { input_dir = Direction.LEFT;  }
   else if(rl::is_key_down(rl::KEY_D)) { input_dir = Direction.RIGHT; }
   else if(rl::is_key_down(rl::KEY_S)) { input_dir = Direction.DOWN;  }
+
+  // Special condition: PacMan can turn 180 after eating a ghost
+  if(self.state_flags & PacManState.ATE_GHOST) {
+    self.state_flags ^= PacManState.ATE_GHOST;
+    
+    if(!gl::is_reverse_dir(self.dirs, input_dir) || input_dir == Direction.NONE) return;
+
+    next_pos = gl::get_tile_offset(self.pos, input_dir);
+    next_tile = maze::get_tile_at(tiles, next_pos);
+ 
+    if(gl::is_aligned(self.pos) && next_tile.type != WALL) {
+      self.dirs = Direction.NONE.type << 4; // Reset it in case it was a pre turn
+      self.dirs = (self.dirs & TURN_DIR_MASK) | (input_dir & CURR_DIR_MASK);
+    }
+    else if(is_early_turn(tiles, self.pos, self.dirs, input_dir)) {
+      self.dirs = (self.dirs & CURR_DIR_MASK) | (input_dir << 4);
+    }
+  }
   
   // PacMan is forbiden from turning 180 deg while moving
   if(input_dir != Direction.NONE && !gl::is_reverse_dir(self.dirs, input_dir) ||
      self.state_flags & PacManState.TURN_180 && input_dir != Direction.NONE) {
+    
     next_pos = gl::get_tile_offset(self.pos, input_dir);
     next_tile = maze::get_tile_at(tiles, next_pos);
- 
-    if((gl::is_aligned(self.pos) || (self.dirs & CURR_DIR_MASK) == Direction.NONE) && next_tile.type != WALL) {
+
+    if(gl::is_aligned(self.pos) && next_tile.type != WALL) {
       self.dirs = Direction.NONE.type << 4; // Reset it in case it was a pre turn
       self.dirs = (self.dirs & TURN_DIR_MASK) | (input_dir & CURR_DIR_MASK);
     }
-    
-    if(is_early_turn(tiles, self.pos, self.dirs, input_dir)) {
+    else if(is_early_turn(tiles, self.pos, self.dirs, input_dir)) {
       self.dirs = (self.dirs & CURR_DIR_MASK) | (input_dir << 4);
     }
   }
@@ -155,7 +174,7 @@ fn void PacMan.update_animation(&self, TimeSpan dt) @dynamic {
     return;
   }
   
-  if(self.dirs & CURR_DIR_MASK == Direction.NONE || self.state_flags & PacManState.TURN_180) {
+  if(self.state_flags & PacManState.TURN_180) {
     row = 0;
     return;
   }

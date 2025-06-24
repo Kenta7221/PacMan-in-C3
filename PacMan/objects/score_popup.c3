@@ -47,10 +47,9 @@ fn void? ScorePopup.init(&self, EventType event, Uint16[<2>] pos, Uint16 ghost_p
   }
 
   self.str = (ZString)mem::new_array(char, 12);;
-  self.elapsed_time = 0.f;
+  self.elapsed_time = 0.f;  
   
   Uint16 points;
-  
   if(event == EventType.GHOST_EATEN) {
     points = ghost_points;
     libc::sprintf(self.str, "%d", points);
@@ -71,11 +70,10 @@ fn void? ScorePopup.init(&self, EventType event, Uint16[<2>] pos, Uint16 ghost_p
 *>
 fn void ScorePopup.update(&self, EventType event, Uint16[<2>] pos, Uint16 ghost_points, Uint16 fruit_points) {
   self.elapsed_time = 0.f;
-  
   Uint16 points;
     
   if(event == EventType.GHOST_EATEN) {
-
+    points = ghost_points;
     libc::sprintf(self.str, "%d", points);
     self.pos = (pos / gl::TILE_SCALED) * gl::TILE_SCALED;
     self.color = { 0, 255, 255, 255 };

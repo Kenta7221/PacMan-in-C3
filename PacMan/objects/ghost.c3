@@ -360,7 +360,7 @@ fn void Ghost.move(&self, Tile *tiles, Int16[<2>] pacman_pos, uint level, Uint8 
   }
 
   Int16[<2>] target_pos;
-  if(global_state & GameplayState.CHASE_MODE || self.state_flags & GhostState.ELROY) { target_pos = pacman_pos; }
+  if(global_state & GameplayFlags.CHASE_MODE || self.state_flags & GhostState.ELROY) { target_pos = pacman_pos; }
   else { target_pos = self.scatter_tile; }
     
   bool tunnel_penalty;
@@ -428,7 +428,7 @@ fn void Ghost.update(&self, Gameplay *ctx, bool *collision, bool dot_eaten, Time
 			exceeds_time,
 			self.dot_counter,
 			self.state_flags,
-			(bool)(ctx.flags & GameplayState.USE_GLOBAL_COUNTER),
+			(bool)(ctx.flags & GameplayFlags.USE_GLOBAL_COUNTER),
 			ctx.global_ghosts_dot_counter,
 			ctx.timer.level) && prev_ghost_leaves_spawn || self.ghost_type == GhostType.BLINKY
   ) {
