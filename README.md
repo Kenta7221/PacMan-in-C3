@@ -22,7 +22,7 @@ cd PacMan
 ```bash
 c3c run
 ```
-3. If the window is too big or too small for you, navigate to the subdirectory and open a file called main.c3. There you will find a variable called SCREEN_SCALE, which you can change to your personal preference:
+3. If the window is too big or too small for you, navigate to the subdirectory and open a file called main.c3. There you will find a variable called SCREEN_SCALE, which you can change to your personal preference but the value must be an integer:
 ```bash
 # Your prefered scale value, e.g. 4
 const SCREEN_SCALE = 4;
@@ -34,9 +34,6 @@ const SCREEN_SCALE = 4;
 - You gain **additional life** after scoring **10000 points or more**
 - The game ends when **PacMan loses all his lives**
 - Press the **left arrow key** to **decrease** the volume and the **right arrow key** to **increase** it
-## Missing features
-- Frighten ghost **blink** continuously instead of only when the timer is almost over
-- Some minor bugs
 ## License
 This project is licensed under the [MIT License](LICENSE.md)
 ## Acknowledgments

@@ -1,12 +1,10 @@
 module ui;
 
+import std::io;
+import libc;
+
 import gl;
 import rl;
-
-import file_loader;
-
-import libc;
-import std::io;
 
 /*
 
@@ -35,20 +33,14 @@ struct GameUI {
 }
 
 fn void? GameUI.init(&self) {
-  const String FONT_DIR = "assets/fonts/emulogic.ttf";
-  const String ATLAS_FILENAME = "assets/textures/fruits.png";
+  const FONT_DIR = "assets/fonts/emulogic.ttf";
+  const ATLAS_FILENAME = "assets/textures/fruits.png";
   
   self.font = rl::load_font_ex(FONT_DIR, gl::FONT_BASE_SIZE, null, 0);
-  if(!rl::is_font_valid(self.font)) {
-    io::eprintn("Font for ui was not loaded!");
-    return io::FILE_NOT_FOUND?;
-  }
+  if(!rl::is_font_valid(self.font)) return gl::FONT_NOT_FOUND?;
 
   self.texture = rl::load_texture(ATLAS_FILENAME);
-  if(!rl::is_texture_valid(self.texture)) {
-    io::eprintn("Fruits texture was not loaded!");
-    return io::FILE_NOT_FOUND?;
-  }
+  if(!rl::is_texture_valid(self.texture)) return gl::TEXTURE_NOT_FOUND?;
 
   load_high_score(&self.high_score)!;
   self.score = 0;

@@ -1,6 +1,5 @@
 module ghost;
 
-import std::io;
 import std::math;
 
 import gl;
@@ -113,7 +112,7 @@ fn void Ghost.set_at_start_pos(&self) {
   if(self.ghost_type != GhostType.BLINKY) self.state_flags |= GhostState.IN_SPAWN;
 
   // To update every ghost at the beginning
-  self.update_animation(dt: 0);
+  self.update_animation(dt: 0, frighten_near_end: false);
 }
 
 fn bool Ghost.collision(&self, Int16[<2>] pacman_pos) {
@@ -382,13 +381,16 @@ fn void Ghost.move(&self, Tile *tiles, Int16[<2>] pacman_pos, uint level, Uint8 
   self.dir = best_dir;
 }
 
-fn void Ghost.update_animation(&self, TimeSpan dt) @dynamic {
+fn void Ghost.update_animation(&self, TimeSpan dt, bool frighten_near_end) @dynamic {
   Uint8 row = 0;
-  Uint8 flip = 0;
   
-  defer self.animation.update_frame(row, dt, flip);
+  defer self.animation.update_frame(row, dt, flip: 0);
   
   if(self.state_flags & GhostState.FRIGHTEN) {
+    frighten_near_end
+      ? self.animation.update_count(0, 4)
+      : self.animation.update_count(0, 2);
+
     row = 4;
     return;
   }
@@ -411,10 +413,10 @@ fn void Ghost.update_animation(&self, TimeSpan dt) @dynamic {
  @param [&in] ctx : "game context passed as null!"
  @param [&out] collision : "Collision passed as null!"
 *>
-fn void Ghost.update(&self, Gameplay *ctx, bool *collision, bool dot_eaten, TimeSpan dt) {
+fn void Ghost.update(&self, Gameplay *ctx, bool *collision, bool dot_eaten, bool frighten_near_end, TimeSpan dt) {
   static bool prev_ghost_leaves_spawn = false;
 
-  defer self.update_animation(dt);
+  defer self.update_animation(dt, frighten_near_end);
 
   // 1. Check spawn conditions
   if(self.state_flags & GhostState.DEAD) {
@@ -671,7 +673,7 @@ fn Uint8 get_rnd_dir(Int16[<2>] *pos, Uint8 *dir, Tile *tiles, Uint16 rng_index)
     Uint8 potential_dir = Direction.values[i % 4 + 1]; // +1 for skipping none direction
     if(is_valid_move(tiles, *pos, *dir, potential_dir, frighten_mode: true)) return potential_dir;
   }
-
+  
   // Never  will be called because for loop tests all directions
   return *dir;
 }

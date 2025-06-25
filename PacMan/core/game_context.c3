@@ -1,6 +1,5 @@
 module game_ctx;
 
-import std::io;
 import std::time;
 import gl;
 import rl;

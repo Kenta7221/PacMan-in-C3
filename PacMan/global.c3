@@ -22,6 +22,10 @@ alias Int8 = ichar;
 
 alias TimeSpan = float;
 
+faultdef FONT_NOT_FOUND;
+faultdef TEXTURE_NOT_FOUND;
+faultdef SFX_NOT_FOUND;
+
 // Actual scale used everywhere
 const SCALE = main::SCREEN_SCALE;
 const TILE_SIZE = 8;
@@ -56,7 +60,6 @@ enum Direction : Uint8 (inline Uint8 type){
   DOWN	        = 0x01 << 2,
   RIGHT		= 0x01 << 3,
 }
-
 
 //------------------------------------------------------------------------------------
 // Global functions and macro

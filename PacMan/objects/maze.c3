@@ -1,9 +1,5 @@
 module maze;
 
-import std::io;
-import std::core::mem;
-import libc;
-
 import gl;
 import rl;
 
@@ -43,15 +39,11 @@ struct Maze {
   TimeSpan elapsed_time;
 }
 
-// TODO: Think about optional return if it's a good idea
 fn void? Maze.init(&self) {
-  const String ATLAS_DIR = "assets/textures/maze-spritesheet.png";
+  const ATLAS_DIR = "assets/textures/maze-spritesheet.png";
 
   self.texture = rl::load_texture(ATLAS_DIR);
-  if(!rl::is_texture_valid(self.texture)) {
-    io::printn("Maze texture was not loaded!");
-    return io::FILE_NOT_FOUND?;
-  }
+  if(!rl::is_texture_valid(self.texture)) return gl::TEXTURE_NOT_FOUND?;
 
   create_tilemap(&self.tiles);
 }

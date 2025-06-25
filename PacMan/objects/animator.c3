@@ -16,9 +16,9 @@ Index of this module:
 
 const FLIP_HORIZONTALLY = 0x0F;
 const FLIP_VERTICALLY   = 0xF0;
-
-interface AnimatorHandler {
-  fn void update_animation(TimeSpan dt);
+                                          // Used only for ghosts
+interface AnimatorHandler {               // ⌄⌄⌄⌄
+  fn void update_animation(TimeSpan dt, bool frighten_near_end = false);
 }
 
 struct Animator {
@@ -61,7 +61,7 @@ fn void Animator.update_count(&self, Uint8 start, Uint8 end) {
   self.start = start;
   self.end = end;
 
-  if(self.curr_image < self.start || self.curr_image > self.end) self.curr_image = self.start;
+  if(self.curr_image >= self.end) self.curr_image = self.start;
 }
 
 fn void Animator.update_frame(&self, Uint8 row, TimeSpan dt, Uint8 flip = 0) {

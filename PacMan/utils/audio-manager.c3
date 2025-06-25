@@ -1,7 +1,5 @@
 module audio_manager;
 
-import std::io;
-
 import rl;
 import gl;
 
@@ -45,16 +43,11 @@ fn void? AudioManager.init(&self) {
   self.sound = null;
 
   self.musics[0] = rl::load_music_stream(GHOST_NORMAL_SPEED_SFX);
-  if(!rl::is_music_valid(self.musics[0])) {
-    io::eprintn("Ghost normal speed music has not been loaded!");
-    return io::FILE_NOT_FOUND?;
-  }
+  if(!rl::is_music_valid(self.musics[0])) return gl::SFX_NOT_FOUND?;
+  
 
   self.musics[1] = rl::load_music_stream(PACMAN_EATING_SFX);
-  if(!rl::is_music_valid(self.musics[1])) {
-    io::eprintn("PacMan eating dot music has not been loaded!");
-    return io::FILE_NOT_FOUND?;
-  }
+  if(!rl::is_music_valid(self.musics[1])) return gl::SFX_NOT_FOUND?;
     
   rl::play_music_stream(self.musics[0]);  
   rl::play_music_stream(self.musics[1]);
@@ -69,17 +62,10 @@ fn void AudioManager.reset(&self) {
     
   self.sound = null;
 
+  // The init would throw the error if it doesn't exists so i don't check it here
+  // because I'm lazy
   self.musics[0] = rl::load_music_stream(GHOST_NORMAL_SPEED_SFX);
-  if(!rl::is_music_valid(self.musics[0])) {
-    io::eprintn("Ghost normal speed music has not been loaded!");
-    return;
-  }
-
   self.musics[1] = rl::load_music_stream(PACMAN_EATING_SFX);
-  if(!rl::is_music_valid(self.musics[1])) {
-    io::eprintn("PacMan eating dot music has not been loaded!");
-    return;
-  }
     
   rl::play_music_stream(self.musics[0]);  
   rl::play_music_stream(self.musics[1]);
@@ -95,7 +81,7 @@ fn void AudioManager.disable_previous_ghost_music(&self) @private @inline {
 <*
  @param [&in] ghosts : "Ghosts were passed as null!"
 *>
-fn void AudioManager.update_ghost_music(&self, Ghost *ghosts, uint chase_cycle) {
+fn void AudioManager.update_ghost_music(&self, Ghost *ghosts, Uint8 chase_cycle) {
   const ZString[5] GHOST_SPEED_SFXS = {
     "assets/sfx/ghost-normal-speed.wav",
     "assets/sfx/ghost-spurt-move-1.wav",

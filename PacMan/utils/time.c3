@@ -1,9 +1,6 @@
 module timer;
 
-import std::io;
-
 import gl;
-
 
 /*
 
@@ -21,7 +18,7 @@ const TimeSpan INDEFINITE @private = TimeSpan.max / 2;
 
 struct Timer {
   uint level;
-  uint which_cycle;
+  Uint8 which_cycle;
   
   TimeSpan elapsed_time;
   TimeSpan frighten_mode;
@@ -48,7 +45,7 @@ fn void Timer.reset(&self) {
 }
 
 
-fn void Timer.update(&self, TimeSpan new_time) {  
+fn void Timer.update(&self, TimeSpan new_time) @inline {  
   self.elapsed_time = new_time;
 }
 
@@ -69,16 +66,16 @@ fn bool Timer.exceeds_dot_not_eaten_dur(&self, TimeSpan dt, bool dot_eaten) {
   return self.dot_not_eaten > 3.f;
 }
 
-fn bool Timer.end_frighten_mode(&self, TimeSpan dt, bool frighten_mode) {  
-  if(!frighten_mode) return false;
+fn bool Timer.end_frighten_mode(&self, TimeSpan dt, TimeSpan *duration) {
+  TimeSpan dur = get_frighten_mode_dur(self.level);
 
-  TimeSpan duration = get_frighten_mode_dur(self.level);
+  *duration = dur;
   
   // Immedietly end chase mode
-  if(duration == INDEFINITE) return true;
+  if(dur == INDEFINITE) return true;
   
   self.frighten_mode += dt;
-  return self.frighten_mode > duration;
+  return self.frighten_mode > dur;
 }
 
 fn bool Timer.new_cycle(&self, TimeSpan dt) {

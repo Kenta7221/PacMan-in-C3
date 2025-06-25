@@ -1,7 +1,5 @@
 module game_ctx::title_screen;
 
-import std::io;
-
 import rl;
 import gl;
 
@@ -49,28 +47,16 @@ fn void? TitleScreen.init(&self) {
   };
 
   self.font = rl::load_font_ex(FONT_DIR, gl::FONT_BASE_SIZE, null, 0);
-  if(!rl::is_font_valid(self.font)) {
-    io::eprintn("Font has not been loaded!");
-    return io::FILE_NOT_FOUND?;
-  }
+  if(!rl::is_font_valid(self.font)) return gl::FONT_NOT_FOUND?;
   
   self.maze_atlas = rl::load_texture(MAZE_ATLAS_DIR);
-  if(!rl::is_texture_valid(self.maze_atlas)) {
-    io::eprintn("Maze atlas has not been loaded!");
-    return io::FILE_NOT_FOUND?;
-  }
+  if(!rl::is_texture_valid(self.maze_atlas)) return gl::TEXTURE_NOT_FOUND?;  
 
   self.ghost_atlas = rl::load_texture(GHOST_ATLAS_DIR);
-  if(!rl::is_texture_valid(self.ghost_atlas)) {
-    io::eprintn("Ghost atlas has not been loaded!");
-    return io::FILE_NOT_FOUND?;
-  }
+  if(!rl::is_texture_valid(self.ghost_atlas)) return gl::TEXTURE_NOT_FOUND?;
 
   self.music = rl::load_music_stream(INTRO_DIR);
-  if(!rl::is_music_valid(self.music)) {
-    io::eprintn("Intro music has not been loaded!");
-    return io::FILE_NOT_FOUND?;
-  }
+  if(!rl::is_music_valid(self.music)) return gl::TEXTURE_NOT_FOUND?;
 
   rl::play_music_stream(self.music);
 
@@ -101,7 +87,7 @@ fn void TitleScreen.update(&self, GameState *state, TimeSpan dt) {
     *state = GAMEPLAY;
   }
 
-  foreach(&ghost : self.ghosts) { ghost.update_animation(dt); }
+  foreach(&ghost : self.ghosts) { ghost.update_animation(dt, false); }
 }
 fn void TitleScreen.draw(&self) {
   static bool flash = true;

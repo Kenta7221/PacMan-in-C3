@@ -1,7 +1,5 @@
 module fruit;
 
-import std::io;
-
 import gl;
 import rl;
 
@@ -32,10 +30,7 @@ fn void? Fruit.init(&self, uint level) {
   const String ATLAS_FILENAME = "assets/textures/fruits.png";
   
   self.texture = rl::load_texture(ATLAS_FILENAME);
-  if(!rl::is_texture_valid(self.texture)) {
-    io::eprintn("Fruit texture was not loaded!");
-    return io::FILE_NOT_FOUND?;
-  }
+  if(!rl::is_texture_valid(self.texture)) return gl::TEXTURE_NOT_FOUND?;
 
   self.pos = {
     13 * gl::TILE_SCALED + (gl::TILE_SCALED / 2) - gl::SPRITE_SIZE_SCALED / 4,

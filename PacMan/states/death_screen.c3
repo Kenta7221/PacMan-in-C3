@@ -1,7 +1,5 @@
 module game_ctx::death_screen;
 
-import std::io;
-
 import rl;
 import gl;
 
@@ -25,13 +23,10 @@ struct DeathScreen {
 }
 
 fn void? DeathScreen.init(&self) {
-  const String FONT_DIR = "assets/fonts/emulogic.ttf";
+  const FONT_DIR = "assets/fonts/emulogic.ttf";
 
   self.font = rl::load_font_ex(FONT_DIR, gl::TEXT_SIZE, null, 0);
-  if(!rl::is_font_valid(self.font)) {
-    io::printn("Font has not been loaded!");
-    return io::FILE_NOT_FOUND?;
-  }
+  if(!rl::is_font_valid(self.font)) return gl::FONT_NOT_FOUND?;
   
   self.maze.init()!!;
 }

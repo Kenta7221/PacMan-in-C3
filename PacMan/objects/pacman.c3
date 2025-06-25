@@ -1,6 +1,5 @@
 module pacman;
 
-import std::io;
 import std::math;
 
 import gl;
@@ -51,13 +50,10 @@ struct PacMan (AnimatorHandler) {
 }
 
 fn void? PacMan.init(&self) {
-  const String ATLAS_FILENAME = "assets/textures/pacman.png";
+  const ATLAS_FILENAME = "assets/textures/pacman.png";
 
   self.texture = rl::load_texture(ATLAS_FILENAME);
-  if(!rl::is_texture_valid(self.texture)) {
-    io::eprintn("PacMan texture was not loaded!");
-    return io::FILE_NOT_FOUND?;
-  }
+  if(!rl::is_texture_valid(self.texture)) return gl::TEXTURE_NOT_FOUND?;
  
   self.set_at_start_pos();
   self.lives = 3;
@@ -162,8 +158,8 @@ fn void PacMan.move(&self, Tile *tiles, TimeSpan dt, float speed) {
 
   if(self.state_flags & PacManState.TURN_180) self.state_flags ^= PacManState.TURN_180;
 }
-
-fn void PacMan.update_animation(&self, TimeSpan dt) @dynamic {
+                                                    // Never used, only implemented for ghosts
+fn void PacMan.update_animation(&self, TimeSpan dt, bool frighten_near_end = false) @dynamic {
   Uint8 row = 0;
   Uint8 flip = 0;
 

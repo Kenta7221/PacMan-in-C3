@@ -1,7 +1,5 @@
 module game_ctx::gameplay;
 
-import std::io;
-
 import gl;
 import rl;
 
@@ -61,10 +59,7 @@ fn void? Gameplay.init(&self) {
   const GHOST_ATLAS = "assets/textures/ghosts.png";
   
   self.ghost_atlas = rl::load_texture(GHOST_ATLAS);
-  if(!rl::is_texture_valid(self.ghost_atlas)) {
-    io::eprintn("Ghost atlas has not been loaded!");
-    return io::FILE_NOT_FOUND?;
-  }
+  if(!rl::is_texture_valid(self.ghost_atlas)) return gl::TEXTURE_NOT_FOUND?;
     
   self.flags |= GameplayFlags.START_LEVEL;
   self.eaten_dots = 0;
@@ -237,16 +232,23 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
 
     if(self.timer.which_cycle % 2 == 0) self.audio_manager.priority_queue |= QueueState.INCREMENT_SPEED_CYCLE;
   }
- 
-  if(self.timer.end_frighten_mode(dt, (bool)(self.flags & GameplayFlags.FRIGHTEN_MODE))) {
-    self.flags ^= GameplayFlags.FRIGHTEN_MODE;
-    self.timer.frighten_mode = 0.f;
-    
-    self.eaten_ghosts = 0;
-    foreach(&ghost : self.ghosts) { ghost.state_flags &= (Uint8)~GhostState.FRIGHTEN.state; }
 
-    self.audio_manager.priority_queue |= QueueState.INCREMENT_SPEED_CYCLE;
-    self.audio_manager.priority_queue ^= QueueState.PLAYING_FRIGHTEN_MODE;
+  // Used for proper frighten ghost blinking animation
+  TimeSpan duration = 0.0f;
+  bool frighten_near_end = false;
+  if(self.flags & GameplayFlags.FRIGHTEN_MODE) {
+    if(self.timer.end_frighten_mode(dt, &duration)) {
+      self.flags ^= GameplayFlags.FRIGHTEN_MODE;
+      self.timer.frighten_mode = 0.f;
+    
+      self.eaten_ghosts = 0;
+      foreach(&ghost : self.ghosts) { ghost.state_flags &= (Uint8)~GhostState.FRIGHTEN.state; }
+
+      self.audio_manager.priority_queue |= QueueState.INCREMENT_SPEED_CYCLE;
+      self.audio_manager.priority_queue ^= QueueState.PLAYING_FRIGHTEN_MODE;
+    }
+
+    if(self.timer.frighten_mode >= 2 * duration / 3) frighten_near_end = true;
   }
 
   self.maze.elapsed_time += dt;
@@ -300,20 +302,17 @@ fn void Gameplay.game_loop(&self, TimeSpan new_time, TimeSpan dt) {
     
     if(dot_eaten && idx != GhostType.BLINKY) ghost::increase_counter((Uint8)idx, &ghost.dot_counter, self.timer.level);
 
-    ghost.update(self, &collision, dot_eaten, dt);
+    ghost.update(self, &collision, dot_eaten, frighten_near_end, dt);
 
     if(collision) {      
       if(ghost.state_flags & GhostState.DEAD) {
 	self.flags |= GameplayFlags.GHOST_EATEN;
-
-	io::printn(self.eaten_ghosts);
 	
 	self.eaten_ghosts += 1;
 	Uint16 ghost_points =  100 * 1 << self.eaten_ghosts;
 	self.ui.score += ghost_points;
 	score_popup::handler(&self.score_popup, ghost.pos, ghost_points, 0, PopupState.INIT, EventType.GHOST_EATEN);
 
-	io::printn("Can turn 180");
 	self.pacman.state_flags |= PacManState.ATE_GHOST;
 	
 	self.audio_manager.update_sound(self.flags, fruit_eaten: false);

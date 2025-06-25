@@ -1,7 +1,5 @@
 module main;
 
-import std::io;
-
 import gl;
 import rl;
 import game_ctx;
