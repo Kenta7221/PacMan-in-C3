@@ -4,7 +4,7 @@ import gl;
 import rl;
 import game_ctx;
 
-const SCREEN_SCALE = 4;
+const SCREEN_SCALE = 5;
 
 fn void main() {
   gl::check_scale(SCREEN_SCALE);

@@ -386,7 +386,8 @@ fn void Ghost.update_animation(&self, TimeSpan dt, bool frighten_near_end) @dyna
   
   defer self.animation.update_frame(row, dt, flip: 0);
   
-  if(self.state_flags & GhostState.FRIGHTEN) {
+  if(self.state_flags & GhostState.DEAD) { self.animation.update_count(start: 16, end: 20); }
+  else if(self.state_flags & GhostState.FRIGHTEN) {
     frighten_near_end
       ? self.animation.update_count(0, 4)
       : self.animation.update_count(0, 2);
@@ -394,8 +395,6 @@ fn void Ghost.update_animation(&self, TimeSpan dt, bool frighten_near_end) @dyna
     row = 4;
     return;
   }
-
-  if(self.state_flags & GhostState.DEAD) { self.animation.update_count(start: 16, end: 20); }
   else if(self.animation.start != 4 * self.ghost_type) { // Change back to normal
     self.animation.update_count(start: 4 * self.ghost_type, end: 4 * (1 + self.ghost_type));
   }
